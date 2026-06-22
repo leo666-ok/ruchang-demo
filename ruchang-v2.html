@@ -1354,7 +1354,7 @@ body {
       <div class="mini-player">
         <div class="mp-art">🐟</div>
         <div>
-          <div class="mp-title">大鱼 · 周深</div>
+          <div class="mp-title">大鱼 · 周深</div><!-- updated dynamically by loadSong() -->
           <div class="mp-sub">今日备课 · 第 3 天</div>
         </div>
         <button class="mp-btn" onclick="togglePlay(this)"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg></button>
@@ -1927,7 +1927,7 @@ function loadSong(id) {
 
   // Update mini player
   document.querySelector('.mp-art').textContent = song.emoji;
-  document.querySelector('.mp-title').textContent = `${song.title} · 周深`;
+  document.querySelector('.mp-title').textContent = `${song.title} · ${currentShow.artist}`;
   isPlaying = false;
   document.querySelector('.mp-btn').innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>`;
 
