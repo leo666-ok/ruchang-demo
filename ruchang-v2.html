@@ -1740,7 +1740,7 @@ const SONG_COVERS = {
 };
 
 // ── Song sequence (for next-song feature) ──────────
-const SONG_SEQUENCE = ['guangliang','qifengle','dalabengba','dayu','generic'];
+// SONG_SEQUENCE removed — next song now derives from currentShow.setlist in loadSong()
 
 // ── Song data ──────────────────────────────────────
 const SONGS = {
@@ -1928,10 +1928,10 @@ function loadSong(id) {
   isPlaying = false;
   document.querySelector('.mp-btn').innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>`;
 
-  // Update next song card
-  const seq = SONG_SEQUENCE;
+  // Update next song card — use current show's setlist so next song is always from the same show
+  const seq = currentShow.setlist.map(s => s.songId);
   const idx = seq.indexOf(id);
-  const nextId = seq[(idx + 1) % seq.length];
+  const nextId = seq[(idx >= 0 ? idx + 1 : 1) % seq.length];
   const nextSong = SONGS[nextId] || SONGS.generic;
   const nextCard = document.getElementById('s4-next-card');
   document.getElementById('s4-next-art').textContent = nextSong.emoji;
