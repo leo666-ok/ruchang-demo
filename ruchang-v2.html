@@ -685,6 +685,29 @@ body {
   width: 44px; height: 44px; border-radius: 10px;
   background: #1a1a1a; border: 1px solid #222;
   display: flex; align-items: center; justify-content: center; font-size: 20px;
+  position: relative; overflow: hidden; flex-shrink: 0;
+}
+.mp-art .eq {
+  display: none;
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.55);
+  align-items: flex-end; justify-content: center; gap: 3px;
+  padding-bottom: 10px;
+  border-radius: 10px;
+}
+.mp-art.playing .eq { display: flex; }
+.eq-bar {
+  width: 3px; border-radius: 2px;
+  background: #fff;
+  animation: eqBounce 0.7s ease-in-out infinite alternate;
+}
+.eq-bar:nth-child(1) { height: 8px;  animation-delay: 0s; }
+.eq-bar:nth-child(2) { height: 14px; animation-delay: 0.15s; }
+.eq-bar:nth-child(3) { height: 10px; animation-delay: 0.05s; }
+.eq-bar:nth-child(4) { height: 16px; animation-delay: 0.25s; }
+@keyframes eqBounce {
+  from { transform: scaleY(0.3); }
+  to   { transform: scaleY(1); }
 }
 .mp-title { font-size: 14px; font-weight: 600; }
 .mp-sub { font-size: 12px; color: #555; margin-top: 2px; }
@@ -1352,7 +1375,7 @@ body {
 
       <!-- Mini player -->
       <div class="mini-player">
-        <div class="mp-art">🐟</div>
+        <div class="mp-art" id="mp-art">🐟<div class="eq"><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div></div></div>
         <div>
           <div class="mp-title">大鱼 · 周深</div><!-- updated dynamically by loadSong() -->
           <div class="mp-sub">今日备课 · 第 3 天</div>
@@ -1926,7 +1949,9 @@ function loadSong(id) {
   ).join('');
 
   // Update mini player
-  document.querySelector('.mp-art').textContent = song.emoji;
+  const mpArt = document.getElementById('mp-art');
+  mpArt.childNodes[0].textContent = song.emoji;
+  mpArt.classList.remove('playing');
   document.querySelector('.mp-title').textContent = `${song.title} · ${currentShow.artist}`;
   const dayLabel = currentShow.isActive && currentShow.dayNum > 0 ? `今日备课 · 第 ${currentShow.dayNum} 天` : `${currentShow.artist} · 备课中`;
   document.querySelector('.mp-sub').textContent = dayLabel;
@@ -2275,6 +2300,7 @@ function togglePlay(btn) {
     ? `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`
     : `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>`;
   btn.style.background = isPlaying ? '#f0f0f0' : '#fff';
+  document.getElementById('mp-art').classList.toggle('playing', isPlaying);
 }
 
 // ── Learned toggle (S5) ───────────────────────────
