@@ -1571,6 +1571,7 @@ const SHOWS = {
     date:'6月29日 周一 · 19:30', venue:'深圳湾体育中心',
     days:'12', songs:'约 22 首', status:'备课中 43%',
     color:'#1a4a6e', gradient:'linear-gradient(160deg,#000a14 0%,#001830 50%,#002444 100%)',
+    photo:'zs-concert.jpg',
     heroPhoto:"url('zs-concert.jpg') center 42% / 140% auto no-repeat",
     isActive: true, progress: 43, dayNum: 3, totalDays: 7,
     todayEmoji:'🐟', todayTitle:'大鱼', todayDesc:'为什么这首歌是全场最重要的时刻',
@@ -1626,6 +1627,7 @@ const SHOWS = {
     date:'8月15日 周五 · 20:00', venue:'上海梅赛德斯奔驰文化中心',
     days:'54', songs:'约 20 首', status:'未开始',
     color:'#d4622a', gradient:'linear-gradient(160deg,#1a0800 0%,#3d1500 50%,#5a2000 100%)',
+    photo:'gwr.jpg',
     heroPhoto:"url('gwr.jpg') center 30% / cover no-repeat",
     isActive: false, progress: 0, dayNum: 0, totalDays: 7,
     todayEmoji:'🌙', todayTitle:'披星戴月地想你', todayDesc:'告五人最具代表性的现场必唱曲',
@@ -1678,6 +1680,7 @@ const SHOWS = {
     date:'9月3日 周三 · 19:30', venue:'广州天河体育场',
     days:'73', songs:'约 25 首', status:'未开始',
     color:'#2d4a8a', gradient:'linear-gradient(160deg,#00051a 0%,#000e30 50%,#001244 100%)',
+    photo:'cyx.jpg',
     heroPhoto:"url('cyx.jpg') center 25% / cover no-repeat",
     isActive: false, progress: 0, dayNum: 0, totalDays: 7,
     todayEmoji:'🎵', todayTitle:'十年', todayDesc:'陈奕迅演唱会最震撼的压轴时刻',
@@ -2017,8 +2020,15 @@ function openSheet(showId) {
   document.getElementById('sheet-days').textContent = show.days;
   document.getElementById('sheet-songs').textContent = show.songs;
   document.getElementById('sheet-status').textContent = show.status;
-  document.getElementById('sheet-cta').textContent = show.ctaText;
-  document.getElementById('sheet-poster-grad').style.background = show.gradient;
+  document.getElementById('sheet-cta').textContent = show.isActive ? '继续备课' : '开始备课这场演出';
+  const posterEl = document.getElementById('sheet-poster-grad');
+  if (show.photo) {
+    posterEl.style.backgroundImage = `url('${show.photo}')`;
+    posterEl.style.backgroundSize = 'cover';
+    posterEl.style.backgroundPosition = 'center 30%';
+  } else {
+    posterEl.style.background = show.gradient;
+  }
 
   const mask = document.getElementById('sheet-mask');
   const sheet = document.getElementById('show-sheet');
