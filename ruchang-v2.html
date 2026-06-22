@@ -705,7 +705,7 @@ body {
 .s5-title-text { font-size:14px; font-weight:600; }
 
 .s5-header {
-  padding: 80px 24px 20px;
+  padding: 108px 24px 20px;
   border-bottom: 1px solid #111;
 }
 .s5-h1 { font-size:22px; font-weight:800; letter-spacing:-0.5px; margin-bottom:4px; }
@@ -2198,7 +2198,7 @@ function renderS5(show) {
             ${s.tag ? `<span class="s5-tag">${s.tag}</span>` : `<div class="s5-bar"><div class="s5-bar-fill" style="width:${s.prob}%"></div></div><span class="s5-prob">${s.prob}%</span>`}
           </div>
         </div>`).join('')}`;
-    s5.querySelector('.s5-accuracy').after(sec);
+    s5.appendChild(sec);
   });
   // Add spacer
   const spacer = document.createElement('div');
