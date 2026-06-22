@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>音乐星盘 · TME AI Builder</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0f;
+    font-family: -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+    min-height: 100vh;
+    color: #fff;
+  }
+
+  h1.page-title {
+    font-size: 13px;
+    color: #666;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  h2.page-subtitle {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 32px;
+    letter-spacing: -0.3px;
+  }
+
+  /* Nav */
+  .screen-nav {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 36px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .screen-nav button {
+    padding: 7px 16px;
+    border-radius: 20px;
+    border: 1px solid #333;
+    background: transparent;
+    color: #999;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .screen-nav button.active,
+  .screen-nav button:hover {
+    background: #1db954;
+    border-color: #1db954;
+    color: #000;
+    font-weight: 600;
+  }
+
+  /* Phone Frame */
+  .phone {
+    width: 375px;
+    min-height: 812px;
+    background: #0f0f18;
+    border-radius: 44px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 0 0 1px #1a1a2e, 0 40px 120px rgba(0,0,0,0.8), 0 0 60px rgba(100,80,255,0.08);
+    border: 1.5px solid #1e1e35;
+  }
+
+  /* Status bar */
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 28px 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+  }
+  .status-bar .time { font-size: 15px; font-weight: 700; }
+  .status-icons { display: flex; gap: 5px; align-items: center; }
+  .status-icons span { font-size: 11px; }
+
+  /* Screen visibility */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ── SCREEN 1: Profile Entry ── */
+  #screen1 .top-nav {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px 16px;
+    gap: 12px;
+  }
+  #screen1 .top-nav .back { font-size: 20px; color: #fff; cursor: pointer; }
+  #screen1 .top-nav .title { font-size: 16px; font-weight: 600; flex: 1; }
+  #screen1 .top-nav .more { font-size: 20px; color: #999; }
+
+  .profile-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 20px 24px;
+  }
+  .avatar-ring {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #7b5ff5, #3ecfcf);
+    padding: 2px;
+    margin-bottom: 12px;
+  }
+  .avatar-inner {
+    width: 100%; height: 100%;
+    border-radius: 50%;
+    background: #1a1a2e;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px;
+  }
+  .profile-name { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+  .profile-sub { font-size: 12px; color: #666; }
+
+  .stats-row {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    padding: 16px 20px;
+    border-top: 1px solid #1a1a2e;
+    border-bottom: 1px solid #1a1a2e;
+    margin: 0 20px;
+  }
+  .stat-item { text-align: center; }
+  .stat-num { font-size: 18px; font-weight: 700; }
+  .stat-label { font-size: 11px; color: #666; margin-top: 2px; }
+
+  /* DNA Entry Card */
+  .dna-entry-card {
+    margin: 20px;
+    border-radius: 20px;
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+  }
+  .dna-entry-bg {
+    background: linear-gradient(135deg, #1a0533 0%, #0d1a3f 50%, #0a2a1a 100%);
+    border: 1px solid #2a1a4a;
+    padding: 20px;
+    border-radius: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .dna-entry-bg::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 180px; height: 180px;
+    background: radial-gradient(circle, rgba(123,95,245,0.25) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .dna-entry-bg::after {
+    content: '';
+    position: absolute;
+    bottom: -30px; left: 20px;
+    width: 120px; height: 120px;
+    background: radial-gradient(circle, rgba(62,207,207,0.15) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .dna-entry-label {
+    font-size: 11px;
+    color: #7b5ff5;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .dna-entry-label::before {
+    content: '✦';
+    font-size: 10px;
+  }
+  .dna-entry-title {
+    font-size: 22px;
+    font-weight: 800;
+    margin-bottom: 6px;
+    background: linear-gradient(90deg, #fff 0%, #b8a0ff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .dna-entry-desc {
+    font-size: 12px;
+    color: #8888aa;
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+  .dna-archetype-preview {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+  }
+  .archetype-emoji { font-size: 28px; }
+  .archetype-info .type { font-size: 15px; font-weight: 700; }
+  .archetype-info .sub { font-size: 11px; color: #7b5ff5; margin-top: 2px; }
+  .dna-cta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .dna-cta-btn {
+    background: linear-gradient(135deg, #7b5ff5, #3ecfcf);
+    border: none;
+    border-radius: 20px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 20px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .dna-updated { font-size: 11px; color: #555; }
+
+  /* Section header */
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 20px 12px;
+  }
+  .section-title { font-size: 15px; font-weight: 700; }
+  .section-more { font-size: 12px; color: #7b5ff5; }
+
+  /* Mini friends */
+  .friends-row {
+    padding: 0 20px 20px;
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+  }
+  .friend-chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    min-width: 60px;
+  }
+  .friend-avatar {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    border: 2px solid #222;
+  }
+  .friend-name { font-size: 10px; color: #888; }
+  .friend-match {
+    font-size: 10px;
+    color: #3ecfcf;
+    font-weight: 600;
+  }
+
+  /* ── SCREEN 2: Star Chart Main ── */
+  #screen2 {
+    background: linear-gradient(180deg, #0d0820 0%, #0a0f1f 40%, #0a1a10 100%);
+  }
+  .star-header {
+    padding: 12px 20px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .star-header .back-btn { font-size: 22px; cursor: pointer; }
+  .star-header .share-btn {
+    font-size: 12px;
+    color: #7b5ff5;
+    background: rgba(123,95,245,0.15);
+    border: 1px solid rgba(123,95,245,0.3);
+    border-radius: 16px;
+    padding: 6px 14px;
+    cursor: pointer;
+  }
+
+  .star-identity {
+    text-align: center;
+    padding: 20px 20px 0;
+  }
+  .star-identity .badge {
+    display: inline-block;
+    font-size: 10px;
+    color: #7b5ff5;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    background: rgba(123,95,245,0.12);
+    border: 1px solid rgba(123,95,245,0.25);
+    border-radius: 20px;
+    padding: 4px 12px;
+    margin-bottom: 12px;
+  }
+  .star-archetype {
+    font-size: 36px;
+    margin-bottom: 8px;
+  }
+  .star-type-name {
+    font-size: 24px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #fff 0%, #b8a0ff 60%, #3ecfcf 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 6px;
+  }
+  .star-type-desc {
+    font-size: 13px;
+    color: #8888aa;
+    line-height: 1.6;
+    padding: 0 20px;
+  }
+
+  /* Radar Chart */
+  .radar-container {
+    display: flex;
+    justify-content: center;
+    padding: 20px 0 10px;
+    position: relative;
+  }
+  .radar-container svg { overflow: visible; }
+
+  /* Dimension bars */
+  .dimensions {
+    padding: 0 20px 16px;
+  }
+  .dim-item {
+    margin-bottom: 14px;
+  }
+  .dim-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .dim-name { font-size: 12px; color: #bbb; font-weight: 500; }
+  .dim-value { font-size: 12px; font-weight: 700; }
+  .dim-bar-bg {
+    height: 5px;
+    background: rgba(255,255,255,0.07);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .dim-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 1s ease;
+  }
+
+  /* Emotion cloud */
+  .emotion-section {
+    padding: 0 20px 20px;
+  }
+  .emotion-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #888;
+    margin-bottom: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-size: 11px;
+  }
+  .emotion-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .emotion-tag {
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  /* ── SCREEN 3: Share Card ── */
+  #screen3 {
+    background: #0a0a14;
+  }
+  .share-header {
+    padding: 12px 20px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .share-header .close { font-size: 22px; cursor: pointer; color: #888; }
+  .share-header .title { font-size: 16px; font-weight: 700; }
+  .share-header .save-btn {
+    font-size: 13px;
+    font-weight: 600;
+    color: #000;
+    background: #fff;
+    border-radius: 16px;
+    padding: 6px 14px;
+    cursor: pointer;
+  }
+
+  .share-card {
+    margin: 0 20px;
+    border-radius: 24px;
+    overflow: hidden;
+    background: linear-gradient(145deg, #1a0a35 0%, #0a1535 40%, #051a12 100%);
+    padding: 28px 24px 24px;
+    position: relative;
+    border: 1px solid rgba(123,95,245,0.2);
+  }
+  .share-card::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 250px; height: 250px;
+    background: radial-gradient(circle, rgba(123,95,245,0.2) 0%, transparent 65%);
+    border-radius: 50%;
+  }
+  .share-card::after {
+    content: '';
+    position: absolute;
+    bottom: -60px; left: -40px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(62,207,207,0.12) 0%, transparent 65%);
+    border-radius: 50%;
+  }
+  .card-logo {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #666;
+    margin-bottom: 20px;
+  }
+  .card-logo strong { color: #888; }
+  .card-user-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .card-avatar {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #7b5ff5, #3ecfcf);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .card-user-info .name { font-size: 16px; font-weight: 700; }
+  .card-user-info .sub { font-size: 11px; color: #666; margin-top: 2px; }
+
+  .card-archetype-center {
+    text-align: center;
+    margin: 16px 0 20px;
+  }
+  .card-emoji { font-size: 56px; margin-bottom: 8px; }
+  .card-type {
+    font-size: 22px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #fff 0%, #b8a0ff 60%, #3ecfcf 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 6px;
+  }
+  .card-quote {
+    font-size: 12px;
+    color: #7777aa;
+    line-height: 1.6;
+    font-style: italic;
+  }
+
+  /* Mini bars in card */
+  .card-dims {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 16px 0 20px;
+  }
+  .card-dim {
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px;
+    padding: 10px 12px;
+  }
+  .card-dim .label { font-size: 10px; color: #666; margin-bottom: 4px; }
+  .card-dim .val { font-size: 13px; font-weight: 700; }
+
+  .card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 20px;
+  }
+  .card-tag {
+    font-size: 11px;
+    border-radius: 16px;
+    padding: 4px 10px;
+    font-weight: 500;
+  }
+
+  .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    padding-top: 14px;
+  }
+  .card-qr {
+    width: 40px; height: 40px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  .card-footer-text { font-size: 10px; color: #555; line-height: 1.6; }
+
+  /* Share action row */
+  .share-actions {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 24px 20px;
+  }
+  .share-action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+  }
+  .share-action .icon {
+    width: 52px; height: 52px;
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .share-action .label { font-size: 11px; color: #888; }
+
+  /* ── SCREEN 4: Compatibility ── */
+  #screen4 {
+    background: linear-gradient(180deg, #0f0820 0%, #0a0a18 100%);
+  }
+  .compat-header {
+    padding: 12px 20px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .compat-header .back { font-size: 22px; cursor: pointer; }
+  .compat-header .title { font-size: 16px; font-weight: 700; }
+
+  .compat-users {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    padding: 0 20px 24px;
+  }
+  .compat-user {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 100px;
+  }
+  .compat-avatar {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+    border: 2px solid #2a1a4a;
+  }
+  .compat-name { font-size: 13px; font-weight: 600; }
+  .compat-type { font-size: 10px; color: #7b5ff5; }
+
+  .compat-score-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100px;
+  }
+  .score-circle {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    background: conic-gradient(#7b5ff5 0% 74%, rgba(255,255,255,0.07) 74% 100%);
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .score-circle::before {
+    content: '';
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: #0f0820;
+    position: absolute;
+  }
+  .score-num {
+    font-size: 18px;
+    font-weight: 800;
+    position: relative;
+    z-index: 1;
+    background: linear-gradient(135deg, #7b5ff5, #3ecfcf);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .score-label { font-size: 11px; color: #666; margin-top: 4px; }
+
+  /* Insight cards */
+  .insight-section { padding: 0 20px; }
+  .insight-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .insight-card .ic-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .insight-card .ic-text {
+    font-size: 13px;
+    color: #ccc;
+    line-height: 1.7;
+  }
+  .insight-card .ic-text strong { color: #fff; }
+
+  /* Shared songs */
+  .shared-songs { padding: 0 20px 20px; }
+  .shared-songs .sec-title {
+    font-size: 12px;
+    color: #666;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+  .song-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .song-cover {
+    width: 40px; height: 40px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .song-info .title { font-size: 13px; font-weight: 600; }
+  .song-info .artist { font-size: 11px; color: #666; margin-top: 2px; }
+  .song-both {
+    margin-left: auto;
+    font-size: 10px;
+    color: #3ecfcf;
+    background: rgba(62,207,207,0.1);
+    border-radius: 10px;
+    padding: 3px 8px;
+    font-weight: 600;
+  }
+
+  .bottom-cta {
+    margin: 8px 20px 24px;
+    background: linear-gradient(135deg, #7b5ff5, #3ecfcf);
+    border-radius: 16px;
+    padding: 16px;
+    text-align: center;
+    cursor: pointer;
+  }
+  .bottom-cta .cta-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .bottom-cta .cta-sub { font-size: 12px; opacity: 0.8; }
+
+  /* Scrollable phone content */
+  .phone-content {
+    height: 780px;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+  .phone-content::-webkit-scrollbar { display: none; }
+
+  /* Stars bg */
+  .stars-bg {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .star-dot {
+    position: absolute;
+    border-radius: 50%;
+    background: #fff;
+    opacity: 0.4;
+    animation: twinkle 3s infinite alternate;
+  }
+  @keyframes twinkle {
+    from { opacity: 0.1; }
+    to { opacity: 0.5; }
+  }
+
+  /* Bottom nav */
+  .bottom-nav {
+    display: flex;
+    justify-content: space-around;
+    padding: 12px 0 20px;
+    border-top: 1px solid #1a1a2e;
+    background: rgba(10,10,20,0.95);
+    backdrop-filter: blur(10px);
+  }
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    color: #555;
+  }
+  .nav-item.active { color: #7b5ff5; }
+  .nav-item .nav-icon { font-size: 20px; }
+</style>
+</head>
+<body>
+
+<h1 class="page-title">TME AI Builder 大赛</h1>
+<h2 class="page-subtitle">音乐星盘 · 产品原型</h2>
+
+<div class="screen-nav">
+  <button class="active" onclick="showScreen(1, this)">① 个人主页入口</button>
+  <button onclick="showScreen(2, this)">② 我的星盘</button>
+  <button onclick="showScreen(3, this)">③ 分享卡片</button>
+  <button onclick="showScreen(4, this)">④ 缘分匹配</button>
+</div>
+
+<div class="phone">
+  <div class="status-bar">
+    <span class="time">9:41</span>
+    <div class="status-icons">
+      <span>●●●●</span>
+      <span>WiFi</span>
+      <span>🔋</span>
+    </div>
+  </div>
+
+  <div class="phone-content">
+
+    <!-- SCREEN 1: Profile Entry -->
+    <div id="screen1" class="screen active">
+      <div class="top-nav">
+        <span class="back">‹</span>
+        <span class="title">我的</span>
+        <span class="more">···</span>
+      </div>
+
+      <div class="profile-hero">
+        <div class="avatar-ring">
+          <div class="avatar-inner">🎵</div>
+        </div>
+        <div class="profile-name">Leo</div>
+        <div class="profile-sub">听了 4 年 QQ 音乐</div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-item">
+          <div class="stat-num">2,847</div>
+          <div class="stat-label">首歌</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">143</div>
+          <div class="stat-label">歌单</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">89</div>
+          <div class="stat-label">关注</div>
+        </div>
+      </div>
+
+      <!-- DNA Entry Card -->
+      <div class="section-header">
+        <span class="section-title">音乐星盘</span>
+        <span class="section-more">✦ 新</span>
+      </div>
+
+      <div class="dna-entry-card" onclick="showScreen(2, null)">
+        <div class="dna-entry-bg">
+          <div class="dna-entry-label">Music DNA</div>
+          <div class="dna-entry-title">你的音乐人格已生成</div>
+          <div class="dna-entry-desc">基于你 4 年的听歌记录，AI 解读了你独一无二的音乐灵魂</div>
+          <div class="dna-archetype-preview">
+            <div class="archetype-emoji">🌙</div>
+            <div class="archetype-info">
+              <div class="type">暗调浪漫主义者</div>
+              <div class="sub">探索指数 · Top 8%</div>
+            </div>
+          </div>
+          <div class="dna-cta">
+            <button class="dna-cta-btn">查看完整星盘 →</button>
+            <span class="dna-updated">今日更新</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-header">
+        <span class="section-title">音乐缘分</span>
+        <span class="section-more">查看全部</span>
+      </div>
+      <div class="friends-row">
+        <div class="friend-chip">
+          <div class="friend-avatar" style="background: linear-gradient(135deg,#f472b6,#7c3aed)">😸</div>
+          <div class="friend-name">小雨</div>
+          <div class="friend-match">74%</div>
+        </div>
+        <div class="friend-chip">
+          <div class="friend-avatar" style="background: linear-gradient(135deg,#34d399,#059669)">🐻</div>
+          <div class="friend-name">阿明</div>
+          <div class="friend-match">61%</div>
+        </div>
+        <div class="friend-chip">
+          <div class="friend-avatar" style="background: linear-gradient(135deg,#fbbf24,#d97706)">🦊</div>
+          <div class="friend-name">CC</div>
+          <div class="friend-match">58%</div>
+        </div>
+        <div class="friend-chip">
+          <div class="friend-avatar" style="background: linear-gradient(135deg,#60a5fa,#2563eb)">🐧</div>
+          <div class="friend-name">大卫</div>
+          <div class="friend-match">52%</div>
+        </div>
+        <div class="friend-chip">
+          <div class="friend-avatar" style="background: linear-gradient(135deg,#f87171,#dc2626)">🐱</div>
+          <div class="friend-name">Janet</div>
+          <div class="friend-match">47%</div>
+        </div>
+      </div>
+
+      <div class="bottom-nav">
+        <div class="nav-item"><span class="nav-icon">🏠</span>首页</div>
+        <div class="nav-item"><span class="nav-icon">🔍</span>发现</div>
+        <div class="nav-item"><span class="nav-icon">🎵</span>音乐库</div>
+        <div class="nav-item active"><span class="nav-icon">👤</span>我的</div>
+      </div>
+    </div>
+
+    <!-- SCREEN 2: Star Chart -->
+    <div id="screen2" class="screen">
+      <div style="position:relative; background: linear-gradient(180deg, #0d0820 0%, #0a0f1f 60%, #0a1a10 100%); min-height: 780px;">
+
+        <!-- Stars background -->
+        <div class="stars-bg" id="starsContainer"></div>
+
+        <div class="star-header">
+          <span class="back-btn" onclick="showScreen(1, null)">‹</span>
+          <span style="font-size:14px; font-weight:700">音乐星盘</span>
+          <span class="share-btn" onclick="showScreen(3, null)">分享 ↑</span>
+        </div>
+
+        <div class="star-identity">
+          <div class="badge">✦ MUSIC DNA ✦</div>
+          <div class="star-archetype">🌙</div>
+          <div class="star-type-name">暗调浪漫主义者</div>
+          <div class="star-type-desc">你在音乐里寻找的不是快乐，而是共鸣。深夜的忧郁、模糊的渴望、说不清的情愫——你把这些都藏在歌单里。</div>
+        </div>
+
+        <!-- Radar Chart SVG -->
+        <div class="radar-container">
+          <svg width="220" height="220" viewBox="-110 -110 220 220">
+            <!-- Grid lines -->
+            <polygon points="0,-80 69,-40 69,40 0,80 -69,40 -69,-40" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+            <polygon points="0,-55 47,-27 47,27 0,55 -47,27 -47,-27" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+            <polygon points="0,-30 26,-15 26,15 0,30 -26,15 -26,-15" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+            <!-- Axes -->
+            <line x1="0" y1="0" x2="0" y2="-80" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+            <line x1="0" y1="0" x2="69" y2="-40" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+            <line x1="0" y1="0" x2="69" y2="40" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+            <line x1="0" y1="0" x2="0" y2="80" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+            <line x1="0" y1="0" x2="-69" y2="40" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+            <line x1="0" y1="0" x2="-69" y2="-40" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+            <!-- Data shape -->
+            <polygon points="0,-72 48,-28 55,35 0,60 -62,30 -40,-38"
+              fill="url(#radarGrad)" fill-opacity="0.35"
+              stroke="url(#radarStroke)" stroke-width="2"/>
+            <!-- Data points -->
+            <circle cx="0" cy="-72" r="4" fill="#b8a0ff"/>
+            <circle cx="48" cy="-28" r="4" fill="#3ecfcf"/>
+            <circle cx="55" cy="35" r="4" fill="#7b5ff5"/>
+            <circle cx="0" cy="60" r="4" fill="#f472b6"/>
+            <circle cx="-62" cy="30" r="4" fill="#3ecfcf"/>
+            <circle cx="-40" cy="-38" r="4" fill="#b8a0ff"/>
+            <!-- Labels -->
+            <text x="0" y="-90" text-anchor="middle" fill="#ccc" font-size="9" font-family="-apple-system,sans-serif">情感深度</text>
+            <text x="80" y="-44" text-anchor="start" fill="#ccc" font-size="9" font-family="-apple-system,sans-serif">探索力</text>
+            <text x="78" y="48" text-anchor="start" fill="#ccc" font-size="9" font-family="-apple-system,sans-serif">社交属性</text>
+            <text x="0" y="98" text-anchor="middle" fill="#ccc" font-size="9" font-family="-apple-system,sans-serif">怀旧感</text>
+            <text x="-82" y="48" text-anchor="end" fill="#ccc" font-size="9" font-family="-apple-system,sans-serif">治愈力</text>
+            <text x="-82" y="-44" text-anchor="end" fill="#ccc" font-size="9" font-family="-apple-system,sans-serif">年代感</text>
+            <defs>
+              <linearGradient id="radarGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#7b5ff5"/>
+                <stop offset="100%" stop-color="#3ecfcf"/>
+              </linearGradient>
+              <linearGradient id="radarStroke" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#b8a0ff"/>
+                <stop offset="100%" stop-color="#3ecfcf"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+
+        <!-- Dimension Bars -->
+        <div class="dimensions">
+          <div class="dim-item">
+            <div class="dim-header">
+              <span class="dim-name">🌑 情感深度</span>
+              <span class="dim-value" style="color:#b8a0ff">90%</span>
+            </div>
+            <div class="dim-bar-bg"><div class="dim-bar-fill" style="width:90%; background: linear-gradient(90deg, #7b5ff5, #b8a0ff)"></div></div>
+          </div>
+          <div class="dim-item">
+            <div class="dim-header">
+              <span class="dim-name">🔭 探索力</span>
+              <span class="dim-value" style="color:#3ecfcf">78%</span>
+            </div>
+            <div class="dim-bar-bg"><div class="dim-bar-fill" style="width:78%; background: linear-gradient(90deg, #0ea5e9, #3ecfcf)"></div></div>
+          </div>
+          <div class="dim-item">
+            <div class="dim-header">
+              <span class="dim-name">💫 治愈力</span>
+              <span class="dim-value" style="color:#a78bfa">82%</span>
+            </div>
+            <div class="dim-bar-bg"><div class="dim-bar-fill" style="width:82%; background: linear-gradient(90deg, #8b5cf6, #a78bfa)"></div></div>
+          </div>
+          <div class="dim-item">
+            <div class="dim-header">
+              <span class="dim-name">📼 怀旧感</span>
+              <span class="dim-value" style="color:#f472b6">75%</span>
+            </div>
+            <div class="dim-bar-bg"><div class="dim-bar-fill" style="width:75%; background: linear-gradient(90deg, #ec4899, #f472b6)"></div></div>
+          </div>
+        </div>
+
+        <!-- Emotion Tags -->
+        <div class="emotion-section">
+          <div class="emotion-title">情绪频谱</div>
+          <div class="emotion-tags">
+            <span class="emotion-tag" style="background:rgba(123,95,245,0.2);color:#b8a0ff;border:1px solid rgba(123,95,245,0.3)">渴望 40%</span>
+            <span class="emotion-tag" style="background:rgba(62,207,207,0.15);color:#3ecfcf;border:1px solid rgba(62,207,207,0.25)">治愈 25%</span>
+            <span class="emotion-tag" style="background:rgba(244,114,182,0.15);color:#f472b6;border:1px solid rgba(244,114,182,0.25)">怀旧 20%</span>
+            <span class="emotion-tag" style="background:rgba(251,191,36,0.12);color:#fbbf24;border:1px solid rgba(251,191,36,0.2)">躁动 15%</span>
+          </div>
+        </div>
+
+        <!-- Bottom CTA -->
+        <div style="display:flex;gap:10px;margin:8px 20px 20px;">
+          <div style="flex:1;background:rgba(123,95,245,0.12);border:1px solid rgba(123,95,245,0.25);border-radius:14px;padding:14px;text-align:center;cursor:pointer;" onclick="showScreen(4, null)">
+            <div style="font-size:20px;margin-bottom:4px;">🔮</div>
+            <div style="font-size:12px;font-weight:700;">测试缘分</div>
+            <div style="font-size:10px;color:#7b5ff5;margin-top:2px;">和好友比对</div>
+          </div>
+          <div style="flex:1;background:rgba(62,207,207,0.1);border:1px solid rgba(62,207,207,0.2);border-radius:14px;padding:14px;text-align:center;cursor:pointer;" onclick="showScreen(3, null)">
+            <div style="font-size:20px;margin-bottom:4px;">✨</div>
+            <div style="font-size:12px;font-weight:700;">生成名片</div>
+            <div style="font-size:10px;color:#3ecfcf;margin-top:2px;">分享给朋友</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- SCREEN 3: Share Card -->
+    <div id="screen3" class="screen">
+      <div style="background:#0a0a14; min-height: 780px;">
+        <div class="share-header">
+          <span class="close" onclick="showScreen(2, null)">✕</span>
+          <span class="title">分享名片</span>
+          <span class="save-btn">保存图片</span>
+        </div>
+
+        <div class="share-card">
+          <div class="card-logo">
+            <span>🎵</span>
+            <strong>QQ 音乐 · 音乐星盘</strong>
+          </div>
+
+          <div class="card-user-row">
+            <div class="card-avatar">🎵</div>
+            <div class="card-user-info">
+              <div class="name">Leo</div>
+              <div class="sub">探索了 2,847 首歌 · 4 年</div>
+            </div>
+          </div>
+
+          <div class="card-archetype-center">
+            <div class="card-emoji">🌙</div>
+            <div class="card-type">暗调浪漫主义者</div>
+            <div class="card-quote">"你在音乐里寻找的不是快乐，而是共鸣。<br>深夜的忧郁，才是你的星图坐标。"</div>
+          </div>
+
+          <div class="card-dims">
+            <div class="card-dim">
+              <div class="label">🌑 情感深度</div>
+              <div class="val" style="color:#b8a0ff">极深 · Top 5%</div>
+            </div>
+            <div class="card-dim">
+              <div class="label">🔭 探索力</div>
+              <div class="val" style="color:#3ecfcf">先锋 · Top 8%</div>
+            </div>
+            <div class="card-dim">
+              <div class="label">📼 年代感</div>
+              <div class="val" style="color:#f472b6">2010s 灵魂</div>
+            </div>
+            <div class="card-dim">
+              <div class="label">🌙 听歌时段</div>
+              <div class="val" style="color:#fbbf24">深夜型</div>
+            </div>
+          </div>
+
+          <div class="card-tags">
+            <span class="card-tag" style="background:rgba(123,95,245,0.2);color:#b8a0ff;">渴望 40%</span>
+            <span class="card-tag" style="background:rgba(62,207,207,0.15);color:#3ecfcf;">治愈 25%</span>
+            <span class="card-tag" style="background:rgba(244,114,182,0.15);color:#f472b6;">怀旧 20%</span>
+            <span class="card-tag" style="background:rgba(251,191,36,0.1);color:#fbbf24;">躁动 15%</span>
+          </div>
+
+          <div class="card-footer">
+            <div class="card-footer-text">
+              扫码查看你的音乐星盘<br>
+              <span style="color:#7b5ff5">music.qq.com/dna</span>
+            </div>
+            <div class="card-qr">▦</div>
+          </div>
+        </div>
+
+        <div class="share-actions">
+          <div class="share-action">
+            <div class="icon">💬</div>
+            <div class="label">微信好友</div>
+          </div>
+          <div class="share-action">
+            <div class="icon">🟢</div>
+            <div class="label">朋友圈</div>
+          </div>
+          <div class="share-action">
+            <div class="icon">🔗</div>
+            <div class="label">复制链接</div>
+          </div>
+          <div class="share-action">
+            <div class="icon">🖼️</div>
+            <div class="label">保存图片</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCREEN 4: Compatibility -->
+    <div id="screen4" class="screen">
+      <div style="background: linear-gradient(180deg, #0f0820 0%, #0a0a18 100%); min-height: 780px;">
+        <div class="compat-header">
+          <span class="back" onclick="showScreen(2, null)">‹</span>
+          <span class="title">音乐缘分</span>
+          <span></span>
+        </div>
+
+        <div class="compat-users">
+          <div class="compat-user">
+            <div class="compat-avatar" style="background: linear-gradient(135deg,#7b5ff5,#3ecfcf)">🎵</div>
+            <div class="compat-name">Leo</div>
+            <div class="compat-type">暗调浪漫主义者</div>
+          </div>
+          <div class="compat-score-center">
+            <div class="score-circle">
+              <span class="score-num">74%</span>
+            </div>
+            <div class="score-label">音乐缘分</div>
+          </div>
+          <div class="compat-user">
+            <div class="compat-avatar" style="background: linear-gradient(135deg,#f472b6,#7c3aed)">😸</div>
+            <div class="compat-name">小雨</div>
+            <div class="compat-type">都市治愈系</div>
+          </div>
+        </div>
+
+        <div class="insight-section">
+          <div class="insight-card">
+            <div class="ic-label" style="color:#b8a0ff">✦ 你们的共鸣</div>
+            <div class="ic-text">你们都执迷于<strong>失落感</strong>里的美——你用噪音和黑暗找到出口，小雨用温柔旋律学会和解。同一种情绪，两种解法。</div>
+          </div>
+          <div class="insight-card">
+            <div class="ic-label" style="color:#3ecfcf">⊕ 你们的差异</div>
+            <div class="ic-text">你比小雨<strong>深夜多听 3 倍</strong>的音乐；她的歌单更阳光，早晨播放量是你的 5 倍。你们在时间维度上刚好错位。</div>
+          </div>
+          <div class="insight-card">
+            <div class="ic-label" style="color:#f472b6">♡ 如果你们一起听</div>
+            <div class="ic-text">AI 为你们生成了专属歌单「<strong>错位的温柔</strong>」——融合了两人的情绪频谱，18 首，53 分钟。</div>
+          </div>
+        </div>
+
+        <div class="shared-songs">
+          <div class="sec-title">共同喜欢的歌</div>
+          <div class="song-row">
+            <div class="song-cover" style="background:linear-gradient(135deg,#7b5ff5,#3ecfcf)">🎶</div>
+            <div class="song-info">
+              <div class="title">漠河舞厅</div>
+              <div class="artist">柳爽</div>
+            </div>
+            <div class="song-both">共同收藏</div>
+          </div>
+          <div class="song-row">
+            <div class="song-cover" style="background:linear-gradient(135deg,#f472b6,#fb923c)">🎶</div>
+            <div class="song-info">
+              <div class="title">Blinding Lights</div>
+              <div class="artist">The Weeknd</div>
+            </div>
+            <div class="song-both">共同收藏</div>
+          </div>
+          <div class="song-row">
+            <div class="song-cover" style="background:linear-gradient(135deg,#34d399,#0ea5e9)">🎶</div>
+            <div class="song-info">
+              <div class="title">夜空中最亮的星</div>
+              <div class="artist">逃跑计划</div>
+            </div>
+            <div class="song-both">共同收藏</div>
+          </div>
+        </div>
+
+        <div class="bottom-cta">
+          <div class="cta-title">▶ 播放「错位的温柔」</div>
+          <div class="cta-sub">AI 为你们生成的专属共听歌单 · 18 首</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end phone-content -->
+</div><!-- end phone -->
+
+<script>
+function showScreen(num, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen' + num).classList.add('active');
+  if (btn) {
+    document.querySelectorAll('.screen-nav button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  } else {
+    // Update nav based on screen number
+    const btns = document.querySelectorAll('.screen-nav button');
+    btns.forEach(b => b.classList.remove('active'));
+    if (btns[num-1]) btns[num-1].classList.add('active');
+  }
+  document.querySelector('.phone-content').scrollTop = 0;
+}
+
+// Generate stars
+const container = document.getElementById('starsContainer');
+if (container) {
+  for (let i = 0; i < 40; i++) {
+    const star = document.createElement('div');
+    star.className = 'star-dot';
+    const size = Math.random() * 2 + 0.5;
+    star.style.cssText = `
+      width: ${size}px; height: ${size}px;
+      top: ${Math.random() * 100}%;
+      left: ${Math.random() * 100}%;
+      animation-delay: ${Math.random() * 3}s;
+      animation-duration: ${2 + Math.random() * 3}s;
+    `;
+    container.appendChild(star);
+  }
+}
+</script>
+</body>
+</html>

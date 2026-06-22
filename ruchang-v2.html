@@ -1,0 +1,2336 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>入场 v2</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+
+body {
+  background: #111;
+  font-family: -apple-system, 'PingFang SC', 'SF Pro Display', sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 20px 80px;
+  color: #fff;
+}
+
+/* Page header */
+.pg-eyebrow { font-size: 11px; color: #555; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 8px; text-align: center; }
+.pg-title { font-size: 28px; font-weight: 700; color: #fff; margin-bottom: 4px; text-align: center; letter-spacing: -0.8px; }
+.pg-sub { font-size: 13px; color: #555; margin-bottom: 36px; text-align: center; }
+
+/* Nav pills */
+.nav { display: flex; gap: 6px; margin-bottom: 40px; flex-wrap: wrap; justify-content: center; }
+.nav button {
+  padding: 8px 20px; border-radius: 100px;
+  border: 1px solid #2a2a2a; background: transparent;
+  color: #666; font-size: 12px; font-weight: 500;
+  cursor: pointer; transition: all 0.18s; font-family: inherit;
+}
+.nav button.active { background: #fff; border-color: #fff; color: #000; font-weight: 600; }
+.nav button:not(.active):hover { border-color: #444; color: #ccc; }
+
+/* ── Phone shell ── */
+.phone {
+  width: 390px;
+  background: #000;
+  border-radius: 50px;
+  overflow: hidden;
+  position: relative;
+  box-shadow:
+    0 0 0 1px #1c1c1c,
+    0 60px 160px rgba(0,0,0,0.9),
+    inset 0 0 0 1px rgba(255,255,255,0.04);
+}
+
+/* Dynamic island */
+.island {
+  width: 126px; height: 37px;
+  background: #000;
+  border-radius: 50px;
+  position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+  z-index: 40;
+  overflow: hidden;
+}
+
+.pc { height: 696px; overflow-y: scroll; scrollbar-width: none; scroll-behavior: smooth; }
+.pc::-webkit-scrollbar { display: none; }
+
+.screen { display: none; }
+.screen.active { display: block; animation: screenIn 0.26s cubic-bezier(0.25,0.46,0.45,0.94); }
+@keyframes screenIn { from { opacity:0; transform:translateX(18px); } to { opacity:1; transform:none; } }
+
+/* Tap feedback */
+.sl-item, .tl-item, .peak-callout, .mod, .today-card, .today-track, .show-card, .hero, .hero-enter-btn, .mini-player {
+  -webkit-tap-highlight-color: transparent;
+}
+.sl-item { cursor:pointer; transition: background 0.12s; }
+.sl-item:hover { background:#141414; }
+.sl-item:active { background:#1a1a1a; opacity:0.75; }
+.tl-item { cursor:pointer; }
+.tl-item:active { opacity:0.65; }
+.peak-callout { cursor:pointer; transition: border-color 0.15s; }
+.peak-callout:active { border-color:#2a2a2a; opacity:0.8; }
+.mod:active { opacity:0.8; }
+.today-card:active, .today-track:active { opacity:0.75; }
+
+/* ════════════════════════════
+   S1 · MY SHOWS
+════════════════════════════ */
+#s1 { background: #000; padding-bottom: 100px; }
+
+.s1-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 24px;
+  position: absolute;
+  top: 52px; left: 0; right: 0;
+  z-index: 20;
+  background: transparent;
+}
+.s1-wordmark { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+.s1-wordmark em { font-style: normal; color: #fff; }
+.s1-icon-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: #111; border: 1px solid #1e1e1e;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; cursor: pointer;
+}
+
+/* ── Hero (full-bleed concert poster) ── */
+.hero {
+  position: relative; overflow: hidden; cursor: pointer;
+  height: 480px;
+  background: #000;
+}
+
+/* Real concert photo */
+.hero-photo {
+  position: absolute; inset: 0;
+  background: url('zs-concert.jpg') center 42% / 140% auto no-repeat;
+  z-index: 0;
+}
+
+/* Spotify-style: subtle dark vignette + color tone overlay */
+.hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0,0,0,0.15) 0%, transparent 60%),
+    linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.0) 35%, rgba(0,0,0,0.0) 55%, rgba(0,0,0,0.92) 100%);
+  z-index: 1;
+}
+
+/* Multi-beam stage lighting */
+.hero-beams {
+  position: absolute; inset: 0; overflow: hidden; z-index: 2;
+}
+@keyframes beam-fade { from { opacity: 0; } to { opacity: 1; } }
+
+/* Floor gradient */
+.hero-floor {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 260px;
+  background: linear-gradient(to top, #000 0%, rgba(0,0,0,0.7) 40%, transparent 100%);
+  z-index: 3;
+}
+/* Stage bar + glow */
+.hero-stage {
+  position: absolute; bottom: 54px; left: 50%; transform: translateX(-50%);
+  width: 200px; height: 1.5px;
+  background: linear-gradient(90deg, transparent, rgba(255,180,60,0.5), rgba(255,220,120,0.5), transparent);
+  z-index: 4;
+}
+.hero-stage-glow {
+  position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+  width: 300px; height: 110px;
+  background: radial-gradient(ellipse at 50% 100%,
+    rgba(255,150,40,0.22) 0%,
+    rgba(255,100,20,0.08) 50%,
+    transparent 75%);
+  z-index: 4;
+}
+
+/* Crowd silhouettes */
+.hero-crowd {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 54px;
+  display: flex; align-items: flex-end; justify-content: center;
+  gap: 2px; padding: 0 8px; z-index: 5;
+}
+.crowd-person { border-radius: 2px 2px 0 0; }
+
+/* Sparkle dots */
+.sparkle {
+  position: absolute; border-radius: 50%; background: #fff;
+  animation: sp 2s ease-in-out infinite alternate; z-index: 3;
+}
+@keyframes sp { from { opacity: 0.04; } to { opacity: 0.65; } }
+
+/* Hero info overlay */
+.hero-info {
+  position: absolute; inset: 0; z-index: 6;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  padding: 0 22px 26px; pointer-events: none;
+}
+.hero-top-row {
+  display: flex; align-items: flex-start; justify-content: space-between;
+}
+.hero-status-pill {
+  background: rgba(255,140,30,0.2);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,180,60,0.25);
+  border-radius: 100px; padding: 5px 12px;
+  font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: rgba(255,210,120,0.95);
+}
+.hero-cd-pill {
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 100px; padding: 6px 16px;
+  text-align: center;
+}
+.hero-cd-num {
+  font-size: 22px; font-weight: 800; letter-spacing: -1px; line-height: 1;
+}
+.hero-cd-lbl {
+  font-size: 9px; color: rgba(255,255,255,0.35); letter-spacing: 1px;
+  text-transform: uppercase; margin-top: 2px;
+}
+
+.hero-bottom-info { pointer-events: all; }
+.hero-artist {
+  font-size: 52px; font-weight: 800;
+  letter-spacing: -3px; line-height: 0.9;
+  margin-bottom: 8px;
+  text-shadow: 0 4px 32px rgba(0,0,0,0.8), 0 0 60px rgba(200,100,0,0.25);
+}
+.hero-tour {
+  font-size: 12px; color: rgba(255,200,120,0.6);
+  letter-spacing: 1px; margin-bottom: 18px;
+  text-transform: uppercase; font-weight: 500;
+}
+.hero-footer {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  pointer-events: all;
+}
+.hero-meta { }
+.hero-date { font-size: 14px; font-weight: 600; }
+.hero-venue { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 4px; }
+.hero-enter-btn {
+  background: rgba(255,255,255,0.95); color: #000; border: none; border-radius: 100px;
+  padding: 11px 24px; font-size: 13px; font-weight: 700;
+  cursor: pointer; font-family: inherit; flex-shrink: 0;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+
+/* ── Today's Task (new section) ── */
+.today-section {
+  margin: 20px 16px 24px;
+}
+.today-card {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  border-radius: 20px;
+  overflow: hidden;
+  cursor: pointer;
+}
+.today-top {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 18px 12px;
+}
+.today-eyebrow {
+  font-size: 10px; font-weight: 700; letter-spacing: 2px;
+  text-transform: uppercase; color: #555;
+}
+.today-day-track {
+  display: flex; align-items: center; gap: 4px;
+}
+.day-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  border: 1px solid #2a2a2a; background: transparent;
+}
+.day-dot.done { background: #fff; border-color: #fff; }
+.day-dot.today { background: transparent; border-color: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,0.15); }
+
+.today-track-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 10px 18px 16px;
+  border-top: 1px solid #111;
+}
+.today-cover {
+  width: 52px; height: 52px; border-radius: 12px;
+  background: #161616; border: 1px solid #1e1e1e;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; flex-shrink: 0;
+}
+.today-info { flex: 1; }
+.today-task-label { font-size: 10px; color: #555; letter-spacing: 1px; text-transform: uppercase; font-weight: 600; margin-bottom: 5px; }
+.today-song-title { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 3px; }
+.today-song-desc { font-size: 12px; color: #555; line-height: 1.5; }
+.today-play {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: #fff; border: none;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; color: #000; cursor: pointer; flex-shrink: 0;
+}
+
+/* Progress inside today card */
+.today-progress {
+  padding: 10px 18px 14px;
+  border-top: 1px solid #0f0f0f;
+  display: flex; align-items: center; gap: 12px;
+}
+.tp-bar { flex: 1; height: 2px; background: #1a1a1a; border-radius: 1px; overflow: hidden; }
+.tp-fill { height: 100%; background: #fff; border-radius: 1px; }
+.tp-label { font-size: 11px; color: #555; white-space: nowrap; }
+
+/* ── Section heading ── */
+.sec-head { display: flex; justify-content: space-between; align-items: baseline; padding: 0 24px 14px; }
+.sec-h { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
+.sec-a { font-size: 13px; color: #555; }
+
+/* ── Upcoming cards (horizontal scroll) ── */
+.show-scroll-wrap {
+  padding: 0 16px;
+  display: flex; gap: 10px;
+  overflow-x: auto; scrollbar-width: none;
+  padding-bottom: 4px;
+}
+.show-scroll-wrap::-webkit-scrollbar { display: none; }
+
+.show-card {
+  width: 160px; flex-shrink: 0;
+  border-radius: 18px; overflow: hidden;
+  background: #080808; border: 1px solid #141414;
+  cursor: pointer; position: relative;
+}
+.show-card-visual {
+  height: 110px; position: relative; overflow: hidden;
+  background-size: cover; background-position: center 30%;
+}
+/* Bottom fade into card body */
+.show-card-visual::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 70px;
+  background: linear-gradient(to top, #080808 0%, transparent 100%);
+  z-index: 2;
+}
+/* Spotify-style color wash — blend-mode:color 让颜色染进照片本身 */
+.sc-color {
+  position: absolute; inset: 0; z-index: 1;
+  mix-blend-mode: color;
+  opacity: 0.75;
+}
+/* 底部暗化，保证文字可读 */
+.sc-vignette {
+  position: absolute; inset: 0; z-index: 2;
+  background: linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 55%);
+}
+.show-card-ico { font-size: 36px; position: relative; z-index: 1; }
+.show-card-body { padding: 10px 14px 14px; }
+.show-card-name { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 3px; }
+.show-card-date { font-size: 11px; color: #555; margin-bottom: 8px; }
+.show-card-badge {
+  display: inline-block; font-size: 10px; font-weight: 600;
+  border-radius: 6px; padding: 3px 8px;
+  background: #111; border: 1px solid #1e1e1e; color: #555;
+}
+.show-card-badge.add {
+  background: transparent; border: 1px dashed #222; color: #3a3a3a;
+  width: 100%; text-align: center; padding: 6px;
+}
+
+/* ── Bottom tab bar — fixed inside phone shell ── */
+.tab-bar {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  display: flex; justify-content: space-around;
+  padding: 12px 0 28px;
+  background: rgba(0,0,0,0.96);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid #0f0f0f;
+  z-index: 30;
+}
+.tab {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  font-size: 10px; color: #3a3a3a; cursor: pointer; min-width: 60px;
+}
+.tab.on { color: #fff; }
+.tab-ico { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
+.tab-ico svg { width: 24px; height: 24px; }
+
+/* ════════════════════════════
+   S2 · PREP DASHBOARD
+════════════════════════════ */
+#s2 { background: #000; padding-bottom: 84px; }
+
+/* S2 mini hero banner */
+.s2-hero {
+  position: relative; height: 390px; overflow: hidden;
+}
+.s2-hero-photo {
+  position: absolute; inset: 0;
+  background: url('zs-concert.jpg') center 48% / cover no-repeat;
+}
+.s2-hero-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.0) 35%, rgba(0,0,0,0.0) 55%, #000 100%);
+}
+.s2-top-bar {
+  position: absolute; top: 52px; left: 0; right: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 20px;
+  z-index: 20;
+}
+.s2-back { color: #fff; cursor: pointer; display: flex; align-items: center; }
+.s2-share { color: rgba(255,255,255,0.6); cursor: pointer; display: flex; align-items: center; }
+.s2-hero-info {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 0 20px 16px; z-index: 2;
+}
+.s2-name { font-size: 28px; font-weight: 800; letter-spacing: -1.5px; line-height: 1; margin-bottom: 4px; }
+.s2-tour-line { font-size: 11px; color: rgba(255,255,255,0.45); letter-spacing: 0.5px; }
+
+/* Progress ring strip */
+.s2-progress-strip {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 20px;
+  border-bottom: 1px solid #0f0f0f;
+  background: #050505;
+}
+.s2-ring {
+  position: relative; width: 48px; height: 48px; flex-shrink: 0;
+}
+.s2-ring svg { width: 48px; height: 48px; transform: rotate(-90deg); }
+.s2-ring-progress { transition: stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1); }
+.s2-ring-num {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 800; letter-spacing: -0.5px;
+}
+.s2-strip-text { flex: 1; }
+.s2-strip-label { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+.s2-strip-sub { font-size: 11px; color: #444; }
+.s2-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.s2-chip {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.3px;
+  border-radius: 6px; padding: 4px 10px;
+  background: #111; border: 1px solid #1c1c1c; color: #666;
+}
+.s2-chip.hi { background: rgba(255,180,50,0.1); border-color: rgba(255,180,50,0.2); color: rgba(255,200,100,0.8); }
+
+/* Modules */
+.mods { padding: 20px 16px; display: flex; flex-direction: column; gap: 2px; }
+
+.mod {
+  border-radius: 20px; overflow: hidden;
+  border: 1px solid #141414;
+  cursor: pointer; transition: border-color 0.15s;
+  margin-bottom: 10px;
+}
+.mod:hover { border-color: #2a2a2a; }
+
+/* Setlist mod */
+.mod-sl { background: #080808; padding: 20px; }
+.mod-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; }
+.mod-h-left { }
+.mod-eyebrow { font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #555; margin-bottom: 5px; }
+.mod-title { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+.mod-pill {
+  font-size: 11px; font-weight: 600; border-radius: 100px;
+  padding: 4px 12px; background: rgba(255,255,255,0.06); color: #888;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.mod-pill.hi { background: rgba(255,255,255,0.1); color: #ccc; }
+
+.sl-items { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.sl-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px; border-radius: 12px;
+  background: #0f0f0f; border: 1px solid #161616;
+}
+.sl-idx { font-size: 11px; color: #3a3a3a; font-weight: 700; width: 14px; text-align: right; flex-shrink: 0; }
+.sl-name { font-size: 14px; font-weight: 600; flex: 1; }
+.sl-prob-bar { width: 60px; height: 3px; background: #1a1a1a; border-radius: 2px; overflow: hidden; margin-right: 6px; }
+.sl-prob-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, rgba(255,160,40,0.8), rgba(255,220,80,0.9)); }
+.sl-pct { font-size: 11px; font-weight: 700; color: #555; width: 30px; text-align: right; }
+.sl-more-link { font-size: 13px; color: #555; text-align: center; }
+
+/* Emotion mod */
+.mod-em { background: #080808; padding: 20px; }
+.em-chart { margin: 12px 0 8px; height: 72px; position: relative; }
+.em-chart svg { width: 100%; height: 100%; overflow: visible; }
+.em-phases { display: flex; gap: 6px; margin-top: 10px; }
+.em-phase {
+  flex: 1; text-align: center; font-size: 10px; font-weight: 600;
+  padding: 5px 4px; border-radius: 8px; border: 1px solid #161616;
+  color: #555; background: #0d0d0d;
+}
+.em-phase.peak { color: rgba(255,210,80,0.95); background: rgba(255,160,30,0.1); border-color: rgba(255,160,30,0.25); }
+
+/* Plan mod */
+.mod-plan-card { background: #080808; padding: 20px; }
+.plan-row { display: flex; gap: 5px; margin: 12px 0; }
+.pr-day {
+  flex: 1; border-radius: 10px; padding: 8px 4px; text-align: center;
+  background: #0d0d0d; border: 1px solid #161616;
+}
+.pr-day.done { border-color: #222; }
+.pr-day.done .pr-n { color: #444; }
+.pr-day.today { border-color: #333; background: #111; }
+.pr-day.today .pr-n { color: #fff; }
+.pr-n { font-size: 14px; font-weight: 700; color: #2a2a2a; line-height: 1; margin-bottom: 3px; }
+.pr-l { font-size: 9px; color: #3a3a3a; text-transform: uppercase; letter-spacing: 0.5px; }
+.pr-day.done .pr-l { color: #3a3a3a; }
+.pr-day.today .pr-l { color: #777; }
+
+.today-track {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px; background: #0d0d0d; border-radius: 14px;
+  border: 1px solid #181818; cursor: pointer;
+}
+.tt-art {
+  width: 46px; height: 46px; border-radius: 10px;
+  background: #1a1a1a; display: flex; align-items: center;
+  justify-content: center; font-size: 22px; flex-shrink: 0;
+  border: 1px solid #222;
+}
+.tt-title { font-size: 14px; font-weight: 600; }
+.tt-sub { font-size: 12px; color: #555; margin-top: 3px; }
+.tt-play {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: #fff; display: flex; align-items: center;
+  justify-content: center; font-size: 12px; color: #000;
+  margin-left: auto; flex-shrink: 0; cursor: pointer;
+}
+
+/* ════════════════════════════
+   S3 · EMOTION MAP
+════════════════════════════ */
+#s3 { background: #000; padding-bottom: 84px; }
+
+.s3-hero {
+  position: relative; height: 280px; overflow: hidden;
+}
+.s3-hero-photo {
+  position: absolute; inset: 0;
+  background: url('zs-concert.jpg') center 45% / cover no-repeat;
+}
+.s3-hero-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.0) 35%, rgba(0,0,0,0.0) 55%, #000 100%);
+}
+/* Amber stage glow at bottom */
+.s3-hero-glow {
+  position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 260px; height: 80px;
+  background: radial-gradient(ellipse at 50% 100%, rgba(255,140,30,0.18) 0%, transparent 70%);
+  z-index: 2;
+}
+.s3-back { position: absolute; top: 62px; left: 20px; z-index: 20; cursor: pointer; color: #fff; display: flex; align-items: center; }
+
+.s3-meta {
+  padding: 20px 24px 8px;
+  border-bottom: 1px solid #111;
+}
+.s3-artist { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+.s3-tour { font-size: 13px; color: #555; margin-top: 3px; }
+
+/* Full chart */
+.chart-wrap {
+  padding: 24px 24px 8px;
+}
+.chart-title { font-size: 11px; font-weight: 600; color: #555; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; }
+.chart-area { height: 120px; position: relative; }
+.chart-area svg { width: 100%; height: 100%; overflow: visible; }
+
+.chart-axis {
+  display: flex; justify-content: space-between;
+  padding: 8px 0 20px;
+}
+.chart-axis span { font-size: 10px; color: #3a3a3a; }
+
+/* Peak callout */
+.peak-callout {
+  margin: 0 24px 24px;
+  padding: 16px 18px;
+  background: #0a0a0a;
+  border-radius: 16px;
+  border: 1px solid #1a1a1a;
+  display: flex; align-items: flex-start; gap: 14px;
+}
+.pc-line { width: 2px; border-radius: 2px; background: rgba(255,180,50,0.8); flex-shrink: 0; align-self: stretch; }
+.pc-label { font-size: 10px; color: #555; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600; margin-bottom: 6px; }
+.pc-moment { font-size: 16px; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.3px; }
+.pc-desc { font-size: 13px; color: #777; line-height: 1.7; }
+
+/* Timeline */
+.timeline { padding: 0 24px 20px; }
+.tl-label { font-size: 11px; font-weight: 600; color: #555; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 20px; }
+
+.tl-item { display: flex; gap: 16px; margin-bottom: 24px; }
+.tl-spine { display: flex; flex-direction: column; align-items: center; width: 12px; flex-shrink: 0; margin-top: 4px; }
+.tl-dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid #333; flex-shrink: 0; }
+.tl-dot.lit { border-color: rgba(255,200,60,0.9); background: rgba(255,200,60,0.9); box-shadow: 0 0 8px rgba(255,180,30,0.5); }
+.tl-line { flex: 1; width: 1px; background: #1a1a1a; min-height: 30px; margin-top: 4px; }
+
+.tl-body { flex: 1; }
+.tl-phase { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+.tl-songs { font-size: 12px; color: #555; margin-bottom: 6px; }
+.tl-desc { font-size: 13px; color: #888; line-height: 1.7; }
+.tl-time { font-size: 11px; color: #3a3a3a; margin-top: 6px; }
+
+/* ════════════════════════════
+   S4 · SONG STORY
+════════════════════════════ */
+#s4 { background: #000; padding-bottom: 84px; }
+
+.s4-top { display: flex; align-items: center; justify-content: space-between; padding: 12px 24px; position: absolute; top: 52px; left: 0; right: 0; background: transparent; z-index: 20; }
+.s4-back { cursor: pointer; color: #fff; display: flex; align-items: center; }
+.s4-more { color: #555; cursor: pointer; display: flex; align-items: center; }
+
+.s4-cover {
+  margin: 0;
+  height: 420px; border-radius: 0;
+  overflow: hidden; position: relative;
+}
+/* Concert photo — updated dynamically via JS */
+.s4-cover-photo {
+  position: absolute; inset: 0;
+  background: url('zs-dayu.jpg') center 30% / cover no-repeat;
+  transition: background 0.3s ease;
+}
+.s4-cover-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0,0,0,0.25) 0%,
+    rgba(0,0,0,0.0) 35%,
+    rgba(0,0,0,0.0) 55%,
+    #000 100%
+  );
+}
+/* Song title on cover */
+.s4-cover-title {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 20px 24px 24px;
+  z-index: 2;
+}
+.s4-cover-title .ct-name {
+  font-size: 36px; font-weight: 800; letter-spacing: -1.5px; line-height: 1;
+  text-shadow: 0 2px 20px rgba(0,0,0,0.9);
+  margin-bottom: 6px;
+}
+.s4-cover-title .ct-sub {
+  font-size: 12px; color: rgba(255,200,100,0.75);
+  letter-spacing: 0.5px; margin-bottom: 6px;
+  text-transform: uppercase;
+}
+.s4-cover-title .ct-meta {
+  font-size: 12px; color: rgba(255,255,255,0.45);
+  letter-spacing: 0.3px;
+}
+
+.s4-info { padding: 16px 24px 20px; border-bottom: 1px solid #111; }
+.s4-title { font-size: 30px; font-weight: 700; letter-spacing: -1px; line-height: 1; margin-bottom: 5px; }
+.s4-meta { font-size: 13px; color: #555; margin-bottom: 14px; }
+.s4-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.s4-chip {
+  font-size: 11px; font-weight: 600; border-radius: 8px; padding: 4px 10px;
+  background: #0f0f0f; border: 1px solid #1a1a1a; color: #888;
+}
+.s4-chip.hi { color: rgba(255,210,80,0.9); border-color: rgba(255,180,40,0.25); background: rgba(255,160,30,0.1); }
+
+/* Live bar */
+.live-bar {
+  margin: 20px 24px;
+  padding: 16px 18px;
+  background: #080808; border: 1px solid #141414; border-radius: 16px;
+}
+.lb-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.lb-label { font-size: 10px; font-weight: 600; color: #555; letter-spacing: 2px; text-transform: uppercase; }
+.lb-time { font-size: 12px; color: #888; font-weight: 600; }
+.lb-track { height: 3px; background: #1a1a1a; border-radius: 2px; overflow: hidden; margin-bottom: 12px; }
+.lb-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, rgba(255,160,40,0.8), rgba(255,220,80,0.9)); }
+.lb-tip { font-size: 13px; color: #666; line-height: 1.7; }
+.lb-tip strong { color: #ccc; }
+
+/* Story sections */
+.stories { padding: 0 24px; display: flex; flex-direction: column; gap: 1px; }
+
+.story {
+  padding: 20px 0;
+  border-bottom: 1px solid #0f0f0f;
+}
+.story:last-child { border-bottom: none; }
+.story-label {
+  font-size: 10px; font-weight: 600; letter-spacing: 2px;
+  text-transform: uppercase; color: #444; margin-bottom: 10px;
+  display: flex; align-items: center; gap: 8px;
+}
+.story-label::after { content: ''; flex: 1; height: 1px; background: #111; }
+.story-text { font-size: 15px; color: #999; line-height: 1.8; font-weight: 400; }
+.story-text strong { color: #fff; font-weight: 600; }
+.story-text em { color: #ccc; font-style: normal; }
+
+/* Mini player */
+.mini-player {
+  margin: 20px 24px 0;
+  padding: 14px 16px;
+  background: #0d0d0d; border: 1px solid #1a1a1a; border-radius: 16px;
+  display: flex; align-items: center; gap: 14px;
+}
+.mp-art {
+  width: 44px; height: 44px; border-radius: 10px;
+  background: #1a1a1a; border: 1px solid #222;
+  display: flex; align-items: center; justify-content: center; font-size: 20px;
+}
+.mp-title { font-size: 14px; font-weight: 600; }
+.mp-sub { font-size: 12px; color: #555; margin-top: 2px; }
+.mp-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: #fff; border: none;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; color: #000; cursor: pointer; margin-left: auto; flex-shrink: 0;
+}
+
+/* ════════════════════════════
+   S5 · FULL SETLIST
+════════════════════════════ */
+#s5 { background: #000; padding-bottom: 84px; }
+
+.s5-top { display:flex; align-items:center; justify-content:space-between; padding:12px 24px; position:absolute; top:52px; left:0; right:0; background:#000; z-index:20; }
+.s5-back { cursor:pointer; color:#fff; display:flex; align-items:center; }
+.s5-title-text { font-size:14px; font-weight:600; }
+
+.s5-header {
+  padding: 80px 24px 20px;
+  border-bottom: 1px solid #111;
+}
+.s5-h1 { font-size:22px; font-weight:800; letter-spacing:-0.5px; margin-bottom:4px; }
+.s5-sub { font-size:13px; color:#555; }
+.s5-accuracy { display:inline-flex; align-items:center; gap:6px; margin-top:12px; padding:6px 12px; background:rgba(255,180,50,0.1); border:1px solid rgba(255,180,50,0.2); border-radius:100px; font-size:11px; font-weight:700; color:rgba(255,210,80,0.9); }
+
+.s5-section { padding:0 24px; margin-top:20px; }
+.s5-phase { font-size:10px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#444; padding:0 0 12px; display:flex; align-items:center; gap:8px; }
+.s5-phase::after { content:''; flex:1; height:1px; background:#111; }
+
+.s5-row {
+  display:flex; align-items:center; gap:12px;
+  padding:12px 14px; border-radius:14px;
+  background:#080808; border:1px solid #111;
+  margin-bottom:6px; cursor:pointer;
+  transition: border-color 0.12s;
+}
+.s5-row:active { background:#111; opacity:0.75; }
+.s5-row:hover { border-color:#1e1e1e; }
+.s5-num { font-size:11px; color:#333; font-weight:700; width:18px; flex-shrink:0; text-align:right; }
+.s5-art { width:40px; height:40px; border-radius:10px; background:#111; border:1px solid #1a1a1a; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+.s5-info { flex:1; }
+.s5-name { font-size:14px; font-weight:600; margin-bottom:2px; }
+.s5-meta { font-size:11px; color:#444; }
+.s5-right { display:flex; align-items:center; gap:8px; }
+.s5-prob { font-size:11px; font-weight:700; color:#555; }
+.s5-tag { font-size:10px; font-weight:600; padding:3px 8px; border-radius:6px; background:rgba(255,160,30,0.1); border:1px solid rgba(255,160,30,0.2); color:rgba(255,200,80,0.85); }
+.s5-bar { width:40px; height:2px; background:#1a1a1a; border-radius:1px; overflow:hidden; }
+.s5-bar-fill { height:100%; border-radius:1px; background:linear-gradient(90deg,rgba(255,160,40,0.8),rgba(255,220,80,0.9)); }
+
+/* ── Bottom sheet ── */
+.sheet-mask {
+  position: absolute; inset: 0; background: rgba(0,0,0,0.6);
+  z-index: 50; display: none; backdrop-filter: blur(4px);
+}
+.sheet-mask.open { display: block; }
+.sheet {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: #0f0f0f; border-radius: 24px 24px 0 0;
+  border-top: 1px solid #1e1e1e;
+  padding: 0 0 40px;
+  transform: translateY(100%);
+  transition: transform 0.32s cubic-bezier(0.32,0.72,0,1);
+  z-index: 51;
+}
+.sheet.open { transform: translateY(0); }
+.sheet-handle { width: 36px; height: 4px; background: #2a2a2a; border-radius: 2px; margin: 12px auto 20px; }
+.sheet-artist-row { display: flex; align-items: center; gap: 14px; padding: 0 20px 20px; border-bottom: 1px solid #111; }
+.sheet-poster { width: 64px; height: 64px; border-radius: 14px; overflow: hidden; flex-shrink: 0; background: #111; border: 1px solid #1a1a1a; }
+.sheet-poster img { width: 100%; height: 100%; object-fit: cover; }
+.sheet-poster-grad { width: 100%; height: 100%; }
+.sheet-info { flex: 1; }
+.sheet-artist { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 3px; }
+.sheet-tour { font-size: 12px; color: #555; margin-bottom: 3px; }
+.sheet-date { font-size: 13px; color: #888; font-weight: 500; }
+.sheet-body { padding: 20px 20px 0; }
+.sheet-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #0f0f0f; }
+.sheet-row-label { font-size: 13px; color: #555; }
+.sheet-row-val { font-size: 13px; font-weight: 600; color: #ccc; }
+.sheet-cta {
+  margin: 20px 20px 0;
+  background: #fff; color: #000; border: none; border-radius: 14px;
+  width: calc(100% - 40px); padding: 16px; font-size: 15px; font-weight: 700;
+  cursor: pointer; font-family: inherit;
+  transition: opacity 0.15s;
+}
+.sheet-cta:active { opacity: 0.8; }
+.sheet-cta-sub { text-align: center; font-size: 12px; color: #444; margin-top: 12px; cursor: pointer; }
+.picker-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 20px; cursor: pointer; transition: background 0.12s;
+}
+.picker-row:active { background: #111; }
+.picker-poster { width: 48px; height: 48px; border-radius: 12px; overflow: hidden; flex-shrink: 0; border: 1px solid #1a1a1a; }
+.picker-poster-grad { width: 100%; height: 100%; }
+.picker-info { flex: 1; }
+.picker-artist { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+.picker-date { font-size: 11px; color: #555; }
+.picker-status { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 6px; background: #111; border: 1px solid #1e1e1e; color: #555; flex-shrink: 0; }
+.picker-status.active { color: rgba(255,200,80,0.9); border-color: rgba(255,180,50,0.25); background: rgba(255,160,30,0.1); }
+
+/* ── S4 next song ── */
+.s4-next {
+  margin: 16px 24px 0;
+  padding: 14px 16px;
+  background: #0a0a0a; border: 1px solid #1a1a1a; border-radius: 16px;
+  display: flex; align-items: center; gap: 14px;
+  cursor: pointer; transition: border-color 0.15s;
+}
+.s4-next:active { opacity:0.75; }
+.s4-next:hover { border-color:#2a2a2a; }
+.s4-next-label { font-size:10px; color:#444; letter-spacing:1.5px; text-transform:uppercase; font-weight:600; margin-bottom:3px; }
+.s4-next-title { font-size:14px; font-weight:600; }
+.s4-next-meta { font-size:11px; color:#555; margin-top:2px; }
+.s4-next-art { width:44px; height:44px; border-radius:10px; background:#111; border:1px solid #1a1a1a; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+.s4-next-arrow { color:#333; font-size:20px; margin-left:auto; flex-shrink:0; }
+
+/* ── S5 learned state ── */
+.s5-row.learned { opacity:0.5; }
+.s5-row.learned .s5-name::after { content:' ✓'; color:#555; font-size:11px; }
+.s5-learn-btn {
+  font-size:10px; font-weight:600; padding:4px 10px; border-radius:100px;
+  border:1px solid #222; background:transparent; color:#444;
+  cursor:pointer; flex-shrink:0; font-family:inherit;
+  transition: all 0.15s;
+}
+.s5-learn-btn.done { background:#1a1a1a; color:#666; border-color:#222; }
+
+/* ── Mobile demo mode: full screen, hide outer wrapper ── */
+@media (max-width: 500px) {
+  body {
+    padding: 0;
+    background: #000;
+    justify-content: flex-start;
+  }
+  .pg-eyebrow, .pg-title, .pg-sub, .nav { display: none !important; }
+  .island { display: none !important; }
+  .phone {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .pc {
+    height: 100vh;
+  }
+  /* All navs start at top:0, use padding-top to clear safe area */
+  .s1-nav {
+    top: 0;
+    padding: calc(env(safe-area-inset-top) + 10px) 24px 12px;
+  }
+  .s2-top-bar {
+    top: 0;
+    padding: calc(env(safe-area-inset-top) + 10px) 20px 12px;
+  }
+  .s3-back {
+    top: calc(env(safe-area-inset-top) + 14px);
+  }
+  .s4-top {
+    top: 0;
+    padding: calc(env(safe-area-inset-top) + 10px) 24px 12px;
+    background: #000;
+  }
+  #s4 { padding-top: calc(env(safe-area-inset-top) + 60px); }
+  .s5-top {
+    top: 0;
+    padding: calc(env(safe-area-inset-top) + 10px) 24px 12px;
+  }
+  #s5 { padding-top: calc(env(safe-area-inset-top) + 60px); }
+  .tab-bar { padding-bottom: max(20px, env(safe-area-inset-bottom)); }
+}
+</style>
+</head>
+<body>
+
+<div class="pg-eyebrow">TME AI Builder 大赛</div>
+<div class="pg-title">入场</div>
+<div class="pg-sub">演出前的 AI 私教 · 高保真原型 v2</div>
+
+<div class="nav">
+  <button class="active" onclick="go(1,this)">① 我的演出</button>
+  <button onclick="go(2,this)">② 备课仪表盘</button>
+  <button onclick="go(3,this)">③ 情绪地图</button>
+  <button onclick="go(4,this)">④ 单曲故事</button>
+  <button onclick="go(5,this)">⑤ 完整歌单</button>
+</div>
+
+<div class="phone">
+  <div class="island"></div>
+  <!-- Fixed navs outside scroll container -->
+  <div class="s1-nav" id="s1-nav">
+    <div class="s1-wordmark">入<em>场</em></div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div class="s1-icon-btn" onclick="openShowPicker()" title="切换演出" style="font-size:16px;color:#888">≡</div>
+      <div class="hero-cd-pill">
+        <div class="hero-cd-num">12</div>
+        <div class="hero-cd-lbl">天后开场</div>
+      </div>
+    </div>
+  </div>
+  <div class="s2-top-bar" id="s2-nav" style="display:none">
+    <span class="s2-back" onclick="go(1,null)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></span>
+    <span class="s2-share"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></span>
+  </div>
+  <div class="s3-back" id="s3-nav" onclick="go(2,null)" style="display:none"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
+  <div class="s4-top" id="s4-nav" style="display:none">
+    <span class="s4-back" id="s4-back-btn" onclick="goBack()"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></span>
+    <span style="font-size:14px;font-weight:600">单曲故事</span>
+    <span class="s4-more"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="19" cy="12" r="1.5" fill="currentColor"/></svg></span>
+  </div>
+  <!-- Show picker sheet -->
+  <div class="sheet-mask" id="picker-mask" onclick="closeShowPicker()">
+    <div class="sheet" id="picker-sheet" onclick="event.stopPropagation()" style="padding-bottom:36px">
+      <div class="sheet-handle"></div>
+      <div style="padding:0 20px 16px;font-size:16px;font-weight:700;letter-spacing:-0.3px">我的演出</div>
+      <div id="picker-list"></div>
+    </div>
+  </div>
+
+  <!-- Bottom sheet for show switching -->
+  <div class="sheet-mask" id="sheet-mask" onclick="closeSheet()">
+    <div class="sheet" id="show-sheet" onclick="event.stopPropagation()">
+      <div class="sheet-handle"></div>
+      <div class="sheet-artist-row">
+        <div class="sheet-poster"><div class="sheet-poster-grad" id="sheet-poster-grad"></div></div>
+        <div class="sheet-info">
+          <div class="sheet-artist" id="sheet-artist-name">告五人</div>
+          <div class="sheet-tour" id="sheet-tour-name">STORY 世界巡回演唱会</div>
+          <div class="sheet-date" id="sheet-date-str">8月15日 · 上海梅赛德斯奔驰文化中心</div>
+        </div>
+      </div>
+      <div class="sheet-body">
+        <div class="sheet-row"><span class="sheet-row-label">距开场</span><span class="sheet-row-val" id="sheet-days">54 天</span></div>
+        <div class="sheet-row"><span class="sheet-row-label">预计曲目</span><span class="sheet-row-val" id="sheet-songs">约 20 首</span></div>
+        <div class="sheet-row"><span class="sheet-row-label">备课状态</span><span class="sheet-row-val" id="sheet-status">未开始</span></div>
+      </div>
+      <button class="sheet-cta" id="sheet-cta" onclick="confirmSwitchShow()">开始备课这场演出</button>
+      <div class="sheet-cta-sub" onclick="closeSheet()">暂不切换</div>
+    </div>
+  </div>
+
+  <div class="s5-top" id="s5-nav" style="display:none">
+    <span class="s5-back" onclick="go(2,null)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></span>
+    <span class="s5-title-text">完整歌单</span>
+    <span style="width:24px"></span>
+  </div>
+  <div class="pc">
+
+    <!-- ══ S1 ══ -->
+    <div id="s1" class="screen active">
+
+      <!-- Hero: full-bleed concert poster -->
+      <div class="hero" onclick="go(2,null)">
+
+        <!-- Real concert photo -->
+        <div class="hero-photo"></div>
+
+
+        <!-- Floor fade -->
+        <div class="hero-floor"></div>
+
+        <!-- Info overlay -->
+        <div class="hero-info">
+          <div class="hero-bottom-info">
+            <div class="hero-status-pill" style="margin-bottom:10px; display:inline-block;">正在备课</div>
+            <div class="hero-artist">周深</div>
+            <div class="hero-tour">DEEP SEA 世界巡回演唱会 2026</div>
+            <div class="hero-footer">
+              <div class="hero-meta">
+                <div class="hero-date">6月29日 周一 · 19:30</div>
+                <div class="hero-venue">深圳湾体育中心</div>
+              </div>
+              <button class="hero-enter-btn" onclick="event.stopPropagation();go(2,null)">备课 →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Today's Task -->
+      <div class="today-section">
+        <div class="today-card" onclick="go(4,null)">
+          <div class="today-top">
+            <div class="today-eyebrow">今日任务</div>
+            <div class="today-day-track">
+              <div class="day-dot done"></div>
+              <div class="day-dot done"></div>
+              <div class="day-dot today"></div>
+              <div class="day-dot"></div>
+              <div class="day-dot"></div>
+              <div class="day-dot"></div>
+              <div class="day-dot"></div>
+            </div>
+          </div>
+          <div class="today-track-row">
+            <div class="today-cover">🐟</div>
+            <div class="today-info">
+              <div class="today-task-label">Day 3 · 必读故事</div>
+              <div class="today-song-title">大鱼</div>
+              <div class="today-song-desc">为什么这首歌是全场最重要的时刻</div>
+            </div>
+            <button class="today-play"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg></button>
+          </div>
+          <div class="today-progress">
+            <div class="tp-bar"><div class="tp-fill" style="width:43%"></div></div>
+            <div class="tp-label">备课进度 43%</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upcoming -->
+      <div class="sec-head">
+        <span class="sec-h">即将入场</span>
+        <span class="sec-a">管理</span>
+      </div>
+      <div class="show-scroll-wrap">
+
+        <!-- 告五人：主色 #d4622a 暖砖橙 -->
+        <div class="show-card" data-show="gwr" onclick="openSheet('gwr')">
+          <div class="show-card-visual" style="background-image:url('gwr.jpg');background-position:center 30%;">
+            <div class="sc-color" style="background:#d4622a"></div>
+            <div class="sc-vignette"></div>
+          </div>
+          <div class="show-card-body">
+            <div class="show-card-name">告五人</div>
+            <div class="show-card-date">8月15日 · 上海</div>
+            <div class="show-card-badge">点击开始备课</div>
+          </div>
+        </div>
+
+        <!-- 陈奕迅：主色 #2d4a8a 深海蓝 -->
+        <div class="show-card" data-show="cyx" onclick="openSheet('cyx')">
+          <div class="show-card-visual" style="background-image:url('cyx.jpg');background-position:center 25%;">
+            <div class="sc-color" style="background:#2d4a8a"></div>
+            <div class="sc-vignette"></div>
+          </div>
+          <div class="show-card-body">
+            <div class="show-card-name">陈奕迅</div>
+            <div class="show-card-date">9月3日 · 广州</div>
+            <div class="show-card-badge">点击开始备课</div>
+          </div>
+        </div>
+
+        <!-- 五月天：已结束，主色 #2a6e3f 草绿 + 低亮度 -->
+        <div class="show-card" style="opacity:0.5">
+          <div class="show-card-visual" style="background-image:url('wyt.jpg');background-position:center 30%;filter:brightness(0.8)">
+            <div class="sc-color" style="background:#2a6e3f"></div>
+            <div class="sc-vignette"></div>
+          </div>
+          <div class="show-card-body">
+            <div class="show-card-name">五月天</div>
+            <div class="show-card-date">已结束 · 4月12日</div>
+            <div class="show-card-badge">已入场 ✓</div>
+          </div>
+        </div>
+
+        <div class="show-card" style="border-style:dashed;border-color:#1a1a1a;background:transparent;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;min-height:178px;cursor:pointer;">
+          <div style="font-size:28px;color:#2a2a2a">+</div>
+          <div style="font-size:11px;color:#333;font-weight:600">添加演出</div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Tab bar — fixed to phone bottom, outside scroll container -->
+    <div class="tab-bar">
+      <div class="tab on" onclick="go(1,null)"><div class="tab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="17"/><line x1="9.5" y1="14.5" x2="14.5" y2="14.5"/></svg></div>入场</div>
+      <div class="tab" onclick="go(5,null)"><div class="tab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg></div>歌单</div>
+      <div class="tab" onclick="go(3,null)"><div class="tab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>情绪图</div>
+      <div class="tab" onclick="go(2,null)"><div class="tab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>备课</div>
+    </div>
+
+    <!-- ══ S2 ══ -->
+    <div id="s2" class="screen">
+
+      <!-- Mini hero with photo -->
+      <div class="s2-hero">
+        <div class="s2-hero-photo"></div>
+        <div class="s2-hero-overlay"></div>
+        <div class="s2-hero-info">
+          <div class="s2-name">周深</div>
+          <div class="s2-tour-line">DEEP SEA 2026 · 深圳湾体育中心 · 6月29日</div>
+        </div>
+      </div>
+
+      <!-- Progress strip -->
+      <div class="s2-progress-strip">
+        <div class="s2-ring">
+          <svg viewBox="0 0 48 48">
+            <circle cx="24" cy="24" r="20" fill="none" stroke="#1a1a1a" stroke-width="4"/>
+            <circle id="ring-arc" class="s2-ring-progress" cx="24" cy="24" r="20" fill="none" stroke="rgba(255,180,50,0.7)" stroke-width="4"
+              stroke-dasharray="125.7" stroke-dashoffset="125.7" stroke-linecap="round"/>
+          </svg>
+          <div class="s2-ring-num">43%</div>
+        </div>
+        <div class="s2-strip-text">
+          <div class="s2-strip-label">备课进度 · 第 3 天</div>
+          <div class="s2-strip-sub">还剩 12 天，按计划完成即可</div>
+        </div>
+        <div class="s2-chips">
+          <div class="s2-chip hi">12天后</div>
+        </div>
+      </div>
+
+      <div class="mods">
+
+        <!-- Setlist -->
+        <div class="mod mod-sl">
+          <div class="mod-head">
+            <div class="mod-h-left">
+              <div class="mod-eyebrow">歌单预测</div>
+              <div class="mod-title">22 首 · AI 预测</div>
+            </div>
+            <div class="mod-pill hi">94% 准确率</div>
+          </div>
+          <div class="sl-items">
+            <div class="sl-item" onclick="loadSong('dayu')">
+              <span class="sl-idx">01</span>
+              <span class="sl-name">大鱼</span>
+              <div class="sl-prob-bar"><div class="sl-prob-fill" style="width:99%"></div></div>
+              <span class="sl-pct">99%</span>
+            </div>
+            <div class="sl-item" onclick="loadSong('qifengle')">
+              <span class="sl-idx">02</span>
+              <span class="sl-name">起风了</span>
+              <div class="sl-prob-bar"><div class="sl-prob-fill" style="width:97%"></div></div>
+              <span class="sl-pct">97%</span>
+            </div>
+            <div class="sl-item" onclick="loadSong('guangliang')">
+              <span class="sl-idx">03</span>
+              <span class="sl-name">光亮</span>
+              <div class="sl-prob-bar"><div class="sl-prob-fill" style="width:92%"></div></div>
+              <span class="sl-pct">92%</span>
+            </div>
+            <div class="sl-item" onclick="loadSong('dalabengba')">
+              <span class="sl-idx">04</span>
+              <span class="sl-name">达拉崩吧</span>
+              <div class="sl-prob-bar"><div class="sl-prob-fill" style="width:88%"></div></div>
+              <span class="sl-pct">88%</span>
+            </div>
+          </div>
+          <div class="sl-more-link" onclick="go(5,null)" style="cursor:pointer">查看全部 22 首预测歌单 →</div>
+        </div>
+
+        <!-- Emotion map -->
+        <div class="mod mod-em" onclick="go(3,null)">
+          <div class="mod-head">
+            <div class="mod-h-left">
+              <div class="mod-eyebrow">情绪地图</div>
+              <div class="mod-title">全场弧线预览</div>
+            </div>
+          </div>
+          <div class="em-chart">
+            <svg viewBox="0 0 340 72" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="eg" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="rgba(255,180,50,1)" stop-opacity="0.2"/>
+                  <stop offset="100%" stop-color="rgba(255,180,50,0)" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <path d="M0,60 C15,55 30,48 55,38 C70,30 85,27 105,28 C125,29 135,45 155,50 C170,54 180,48 200,34 C218,21 228,12 250,14 C268,16 280,28 300,26 C318,24 330,20 340,18 L340,72 L0,72 Z" fill="url(#eg)"/>
+              <path d="M0,60 C15,55 30,48 55,38 C70,30 85,27 105,28 C125,29 135,45 155,50 C170,54 180,48 200,34 C218,21 228,12 250,14 C268,16 280,28 300,26 C318,24 330,20 340,18"
+                fill="none" stroke="rgba(255,200,80,0.6)" stroke-width="1.5" stroke-linecap="round"/>
+              <circle cx="250" cy="14" r="3.5" fill="rgba(255,200,80,0.9)"/>
+            </svg>
+          </div>
+          <div class="em-phases">
+            <div class="em-phase">铺垫</div>
+            <div class="em-phase">深处</div>
+            <div class="em-phase peak">高潮 ✦</div>
+            <div class="em-phase">返场</div>
+          </div>
+        </div>
+
+        <!-- 7-day plan -->
+        <div class="mod mod-plan-card">
+          <div class="mod-head">
+            <div class="mod-h-left">
+              <div class="mod-eyebrow">7 天备课</div>
+              <div class="mod-title">今日 · 第 3 天</div>
+            </div>
+            <div class="mod-pill">3 / 7</div>
+          </div>
+          <div class="plan-row">
+            <div class="pr-day done"><div class="pr-n">✓</div><div class="pr-l">D1</div></div>
+            <div class="pr-day done"><div class="pr-n">✓</div><div class="pr-l">D2</div></div>
+            <div class="pr-day today"><div class="pr-n">3</div><div class="pr-l">今天</div></div>
+            <div class="pr-day"><div class="pr-n">4</div><div class="pr-l">D4</div></div>
+            <div class="pr-day"><div class="pr-n">5</div><div class="pr-l">D5</div></div>
+            <div class="pr-day"><div class="pr-n">6</div><div class="pr-l">D6</div></div>
+            <div class="pr-day"><div class="pr-n">7</div><div class="pr-l">D7</div></div>
+          </div>
+          <div class="today-track" onclick="go(4,null)">
+            <div class="tt-art">🐟</div>
+            <div>
+              <div class="tt-title">今日 · 《大鱼》</div>
+              <div class="tt-sub">了解这首歌为什么是全场最重要的时刻</div>
+            </div>
+            <div class="tt-play"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══ S3 ══ -->
+    <div id="s3" class="screen">
+      <div class="s3-hero">
+        <div class="s3-hero-photo"></div>
+        <div class="s3-hero-overlay"></div>
+        <div class="s3-hero-glow"></div>
+      </div>
+
+      <div class="s3-meta">
+        <div class="s3-artist">周深</div>
+        <div class="s3-tour">DEEP SEA 2026 · 约 22 首 · 2h 30min</div>
+      </div>
+
+      <div class="chart-wrap">
+        <div class="chart-title">演出情绪弧线</div>
+        <div class="chart-area">
+          <svg viewBox="0 0 340 120" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="cg2" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="rgba(255,180,50,1)" stop-opacity="0.2"/>
+                <stop offset="100%" stop-color="rgba(255,180,50,0)" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <!-- Grid -->
+            <line x1="0" y1="30" x2="340" y2="30" stroke="#111" stroke-width="1"/>
+            <line x1="0" y1="60" x2="340" y2="60" stroke="#111" stroke-width="1"/>
+            <line x1="0" y1="90" x2="340" y2="90" stroke="#111" stroke-width="1"/>
+            <!-- Area fill -->
+            <path d="M0,100 C12,96 25,88 48,75 C62,65 78,58 100,60 C118,62 130,82 152,88 C168,92 180,84 200,68 C216,54 228,42 250,44 C268,46 280,58 300,56 C318,54 330,48 340,46 L340,120 L0,120 Z" fill="url(#cg2)"/>
+            <!-- Line -->
+            <path d="M0,100 C12,96 25,88 48,75 C62,65 78,58 100,60 C118,62 130,82 152,88 C168,92 180,84 200,68 C216,54 228,42 250,44 C268,46 280,58 300,56 C318,54 330,48 340,46"
+              fill="none" stroke="rgba(255,200,80,0.65)" stroke-width="1.5" stroke-linecap="round"/>
+            <!-- Peak -->
+            <circle cx="250" cy="44" r="5" fill="rgba(255,200,60,0.95)" stroke="#000" stroke-width="2"/>
+            <line x1="250" y1="44" x2="250" y2="120" stroke="rgba(255,255,255,0.08)" stroke-width="1" stroke-dasharray="4,4"/>
+            <!-- Phase dividers -->
+            <line x1="85" y1="0" x2="85" y2="120" stroke="#141414" stroke-width="1"/>
+            <line x1="170" y1="0" x2="170" y2="120" stroke="#141414" stroke-width="1"/>
+            <line x1="255" y1="0" x2="255" y2="120" stroke="#141414" stroke-width="1"/>
+            <!-- Y labels -->
+            <text x="6" y="28" fill="#2a2a2a" font-size="9" font-family="-apple-system,sans-serif">高</text>
+            <text x="6" y="88" fill="#2a2a2a" font-size="9" font-family="-apple-system,sans-serif">低</text>
+          </svg>
+        </div>
+        <div class="chart-axis">
+          <span>开场</span><span>前段</span><span>中场</span><span>高潮</span><span>返场</span>
+        </div>
+      </div>
+
+      <!-- Peak callout -->
+      <div class="peak-callout" onclick="loadSong('dayu')">
+        <div class="pc-line"></div>
+        <div style="flex:1">
+          <div class="pc-label">预测最强时刻</div>
+          <div class="pc-moment">第 85 分钟 · 《大鱼》</div>
+          <div class="pc-desc">全场灯光熄灭，只剩一束追光。过去 7 场演出，这一刻平均有 92% 的观众自发亮起手机灯。</div>
+        </div>
+        <div style="color:#444;font-size:18px;align-self:center">›</div>
+      </div>
+
+      <!-- Timeline -->
+      <div class="timeline">
+        <div class="tl-label">阶段详解</div>
+
+        <div class="tl-item">
+          <div class="tl-spine"><div class="tl-dot"></div><div class="tl-line"></div></div>
+          <div class="tl-body">
+            <div class="tl-phase">开场铺垫</div>
+            <div class="tl-songs">《光亮》《Where the Light Is》《醒不来的梦》</div>
+            <div class="tl-desc">轻盈的曲目，周深在慢慢打开自己，全场在慢慢进入状态。</div>
+            <div class="tl-time">0 — 25 分钟</div>
+          </div>
+        </div>
+
+        <div class="tl-item">
+          <div class="tl-spine"><div class="tl-dot"></div><div class="tl-line"></div></div>
+          <div class="tl-body">
+            <div class="tl-phase">情感深处</div>
+            <div class="tl-songs">《起风了》《清空》《达拉崩吧》</div>
+            <div class="tl-desc">节奏变慢，灯光转蓝。关于遗忘与告别，全场安静一起哼唱。</div>
+            <div class="tl-time">25 — 60 分钟</div>
+          </div>
+        </div>
+
+        <div class="tl-item" onclick="loadSong('dayu')">
+          <div class="tl-spine"><div class="tl-dot lit"></div><div class="tl-line"></div></div>
+          <div class="tl-body">
+            <div class="tl-phase">全场高潮 ✦ <span style="font-size:11px;color:#555;font-weight:400">点击了解 →</span></div>
+            <div class="tl-songs">《大鱼》《燃烧》</div>
+            <div class="tl-desc">舞台特效全开，他的高音会让整个场馆震动。提前充好电，这段值得录。</div>
+            <div class="tl-time">80 — 100 分钟</div>
+          </div>
+        </div>
+
+        <div class="tl-item">
+          <div class="tl-spine"><div class="tl-dot"></div></div>
+          <div class="tl-body">
+            <div class="tl-phase">返场落幕</div>
+            <div class="tl-songs">《别》《你的答案》</div>
+            <div class="tl-desc">安可环节。灯光重新亮起，他会和全场互动道别。最后一首结束后不要急着走。</div>
+            <div class="tl-time">110 — 130 分钟</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ S4 ══ -->
+    <div id="s4" class="screen">
+
+      <div class="s4-cover">
+        <div class="s4-cover-photo"></div>
+        <div class="s4-cover-overlay"></div>
+        <div class="s4-cover-title">
+          <div class="ct-name">大鱼</div>
+          <div class="ct-meta">周深 · 2016 · 电影《大鱼海棠》主题曲</div>
+          <div class="s4-chips" style="margin-top:12px;">
+            <div class="s4-chip hi">全场最高潮</div>
+            <div class="s4-chip hi">第 85 分钟</div>
+            <div class="s4-chip">必读故事</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live bar -->
+      <div class="live-bar">
+        <div class="lb-top">
+          <div class="lb-label">现场预判</div>
+          <div class="lb-time">第 85 分钟</div>
+        </div>
+        <div class="lb-track"><div class="lb-fill" style="width:97%"></div></div>
+        <div class="lb-tip">建议<strong>演出前不要重复听太多次</strong>——把第一次完整感受留给现场。那一刻值得是全新的。</div>
+      </div>
+
+      <!-- Stories -->
+      <div class="stories">
+
+        <div class="story">
+          <div class="story-label">这首歌从哪里来</div>
+          <div class="story-text">
+            2016年，周深接到邀请为国漫电影《大鱼海棠》演唱主题曲时，他才24岁，几乎没人认识他。导演说：<strong>「我们要一个听起来不像人类的声音。」</strong> 他录了三个版本，最终采用了凌晨三点那一条——因为那时候他真的哭了。
+          </div>
+        </div>
+
+        <div class="story">
+          <div class="story-label">歌词里藏了什么</div>
+          <div class="story-text">
+            整首歌在讲一件事：<em>为了爱，把自己献祭掉。</em>「化作灯火，只为照你归途」——这是电影里女主角的选择，也是周深自己对音乐的态度。他曾说：<strong>「唱这首歌的时候，我不是在表演，我是在消失。」</strong>
+          </div>
+        </div>
+
+        <div class="story">
+          <div class="story-label">现场的感觉</div>
+          <div class="story-text">
+            过去 7 场演出，每次唱到第二段副歌，全场会自发亮起手机灯。没有人组织。有人形容那个画面像<strong>「银河掉进了体育馆」</strong>。他唱完后沉默了大约 10 秒，才开口说话。你也可以是其中一盏灯。
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Mini player -->
+      <div class="mini-player">
+        <div class="mp-art">🐟</div>
+        <div>
+          <div class="mp-title">大鱼 · 周深</div>
+          <div class="mp-sub">今日备课 · 第 3 天</div>
+        </div>
+        <button class="mp-btn" onclick="togglePlay(this)"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg></button>
+      </div>
+
+      <!-- Next song -->
+      <div class="s4-next" id="s4-next-card" onclick="">
+        <div class="s4-next-art" id="s4-next-art">🍂</div>
+        <div>
+          <div class="s4-next-label">下一首推荐</div>
+          <div class="s4-next-title" id="s4-next-title">起风了</div>
+          <div class="s4-next-meta" id="s4-next-meta">买辣椒也用券 · 全场合唱</div>
+        </div>
+        <div class="s4-next-arrow">›</div>
+      </div>
+
+      <div style="height:32px"></div>
+    </div>
+
+    <!-- ══ S5 · FULL SETLIST ══ -->
+    <div id="s5" class="screen">
+      <div class="s5-header">
+        <div class="s5-h1">预测歌单</div>
+        <div class="s5-sub">DEEP SEA 2026 · 周深 · 共 22 首</div>
+        <div class="s5-accuracy">✦ AI 准确率 94% · 基于 7 场巡演数据</div>
+      </div>
+
+      <!-- 开场铺垫 -->
+      <div class="s5-section">
+        <div class="s5-phase">开场铺垫 · 0–25 分钟</div>
+        <div class="s5-row learned" id="s5r-guangliang" onclick="loadSong('guangliang')">
+          <span class="s5-num">01</span>
+          <div class="s5-art">✨</div>
+          <div class="s5-info"><div class="s5-name">光亮</div><div class="s5-meta">周深 · 2019</div></div>
+          <div class="s5-right"><button class="s5-learn-btn done" onclick="event.stopPropagation();toggleLearned('guangliang')">已学</button></div>
+        </div>
+        <div class="s5-row" onclick="loadSong('generic')">
+          <span class="s5-num">02</span>
+          <div class="s5-art">🌊</div>
+          <div class="s5-info"><div class="s5-name">Where the Light Is</div><div class="s5-meta">周深 · 2022</div></div>
+          <div class="s5-right"><div class="s5-bar"><div class="s5-bar-fill" style="width:88%"></div></div><span class="s5-prob">88%</span></div>
+        </div>
+        <div class="s5-row" onclick="loadSong('generic')">
+          <span class="s5-num">03</span>
+          <div class="s5-art">🌙</div>
+          <div class="s5-info"><div class="s5-name">醒不来的梦</div><div class="s5-meta">周深 · 2021</div></div>
+          <div class="s5-right"><div class="s5-bar"><div class="s5-bar-fill" style="width:85%"></div></div><span class="s5-prob">85%</span></div>
+        </div>
+        <div class="s5-row" onclick="loadSong('generic')">
+          <span class="s5-num">04</span>
+          <div class="s5-art">🎵</div>
+          <div class="s5-info"><div class="s5-name">蓝色的心</div><div class="s5-meta">周深 · 2023</div></div>
+          <div class="s5-right"><div class="s5-bar"><div class="s5-bar-fill" style="width:80%"></div></div><span class="s5-prob">80%</span></div>
+        </div>
+      </div>
+
+      <!-- 情感深处 -->
+      <div class="s5-section">
+        <div class="s5-phase">情感深处 · 25–60 分钟</div>
+        <div class="s5-row learned" id="s5r-qifengle" onclick="loadSong('qifengle')">
+          <span class="s5-num">05</span>
+          <div class="s5-art">🍂</div>
+          <div class="s5-info"><div class="s5-name">起风了</div><div class="s5-meta">买辣椒也用券 · 2018</div></div>
+          <div class="s5-right"><span class="s5-tag">必唱</span><button class="s5-learn-btn done" onclick="event.stopPropagation();toggleLearned('qifengle')">已学</button></div>
+        </div>
+        <div class="s5-row" onclick="loadSong('generic')">
+          <span class="s5-num">06</span>
+          <div class="s5-art">🌸</div>
+          <div class="s5-info"><div class="s5-name">清空</div><div class="s5-meta">周深 · 2020</div></div>
+          <div class="s5-right"><div class="s5-bar"><div class="s5-bar-fill" style="width:82%"></div></div><span class="s5-prob">82%</span></div>
+        </div>
+        <div class="s5-row" onclick="loadSong('dalabengba')">
+          <span class="s5-num">07</span>
+          <div class="s5-art">🎭</div>
+          <div class="s5-info"><div class="s5-name">达拉崩吧</div><div class="s5-meta">周深 · 2019</div></div>
+          <div class="s5-right"><div class="s5-bar"><div class="s5-bar-fill" style="width:88%"></div></div><span class="s5-prob">88%</span></div>
+        </div>
+        <div class="s5-row" onclick="loadSong('generic')">
+          <span class="s5-num">08</span>
+          <div class="s5-art">🌿</div>
+          <div class="s5-info"><div class="s5-name">用一生去忘记</div><div class="s5-meta">周深 · 2021</div></div>
+          <div class="s5-right"><div class="s5-bar"><div class="s5-bar-fill" style="width:75%"></div></div><span class="s5-prob">75%</span></div>
+        </div>
+        <div class="s5-row" onclick="loadSong('generic')">
+          <span class="s5-num">09</span>
+          <div class="s5-art">🎼</div>
+          <div class="s5-info"><div class="s5-name">不得不爱</div><div class="s5-meta">潘玮柏 feat. 弦子 · cover</div></div>
+          <div class="s5-right"><div class="s5-bar"><div class="s5-bar-fill" style="width:70%"></div></div><span class="s5-prob">70%</span></div>
+        </div>
+        <div class="s5-row" onclick="loadSong('generic')">
+          <span class="s5-num">10</span>
+          <div class="s5-art">💫</div>
+          <div class="s5-info"><div class="s5-name">洋葱</div><div class="s5-meta">周深 · 2022</div></div>
+          <div class="s5-right"><div class="s5-bar"><div class="s5-bar-fill" style="width:72%"></div></div><span class="s5-prob">72%</span></div>
+        </div>
+      </div>
+
+      <!-- 中场互动 -->
+      <div class="s5-section">
+        <div class="s5-phase">中场互动 · 60–80 分钟</div>
+        <div class="s5-row" onclick="loadSong('generic')">
+          <span class="s5-num">11</span>
+          <div class="s5-art">🎤</div>
+          <div class="s5-info"><div class="s5-name">玫瑰</div><div class="s5-meta">周深 · 2023</div></div>
+          <div class="s5-right"><div class="s5-bar"><div class="s5-bar-fill" style="width:65%"></div></div><span class="s5-prob">65%</span></div>
+        </div>
+        <div class="s5-row" onclick="loadSong('generic')">
+          <span class="s5-num">12</span>
+          <div class="s5-art">🌅</div>
+          <div class="s5-info"><div class="s5-name">愿得一人心</div><div class="s5-meta">周深 · 2020</div></div>
+          <div class="s5-right"><div class="s5-bar"><div class="s5-bar-fill" style="width:68%"></div></div><span class="s5-prob">68%</span></div>
+        </div>
+        <div class="s5-row" onclick="loadSong('generic')">
+          <span class="s5-num">13</span>
+          <div class="s5-art">🎹</div>
+          <div class="s5-info"><div class="s5-name">别</div><div class="s5-meta">周深 · 2024</div></div>
+          <div class="s5-right"><div class="s5-bar"><div class="s5-bar-fill" style="width:78%"></div></div><span class="s5-prob">78%</span></div>
+        </div>
+      </div>
+
+      <!-- 全场高潮 -->
+      <div class="s5-section">
+        <div class="s5-phase" style="color:rgba(255,200,80,0.7)">全场高潮 ✦ · 80–100 分钟</div>
+        <div class="s5-row" id="s5r-dayu" onclick="loadSong('dayu')" style="border-color:rgba(255,180,50,0.2);background:rgba(255,160,30,0.05)">
+          <span class="s5-num">14</span>
+          <div class="s5-art">🐟</div>
+          <div class="s5-info"><div class="s5-name" style="color:#fff">大鱼</div><div class="s5-meta">周深 · 2016 · 电影主题曲</div></div>
+          <div class="s5-right"><span class="s5-tag">第85分钟</span><button class="s5-learn-btn" onclick="event.stopPropagation();toggleLearned('dayu')">去学</button></div>
+        </div>
+        <div class="s5-row" onclick="loadSong('generic')">
+          <span class="s5-num">15</span>
+          <div class="s5-art">🔥</div>
+          <div class="s5-info"><div class="s5-name">燃烧</div><div class="s5-meta">周深 · 2022</div></div>
+          <div class="s5-right"><div class="s5-bar"><div class="s5-bar-fill" style="width:90%"></div></div><span class="s5-prob">90%</span></div>
+        </div>
+        <div class="s5-row" onclick="loadSong('generic')">
+          <span class="s5-num">16</span>
+          <div class="s5-art">⚡</div>
+          <div class="s5-info"><div class="s5-name">你的答案</div><div class="s5-meta">阿冗 · cover</div></div>
+          <div class="s5-right"><div class="s5-bar"><div class="s5-bar-fill" style="width:86%"></div></div><span class="s5-prob">86%</span></div>
+        </div>
+      </div>
+
+      <!-- 返场 -->
+      <div class="s5-section">
+        <div class="s5-phase">返场落幕 · 110–130 分钟</div>
+        <div class="s5-row" onclick="loadSong('generic')">
+          <span class="s5-num">17</span>
+          <div class="s5-art">🌃</div>
+          <div class="s5-info"><div class="s5-name">别</div><div class="s5-meta">周深 · 2024</div></div>
+          <div class="s5-right"><div class="s5-bar"><div class="s5-bar-fill" style="width:82%"></div></div><span class="s5-prob">82%</span></div>
+        </div>
+        <div class="s5-row" onclick="loadSong('generic')">
+          <span class="s5-num">18</span>
+          <div class="s5-art">🌟</div>
+          <div class="s5-info"><div class="s5-name">我记得</div><div class="s5-meta">周深 · 2021</div></div>
+          <div class="s5-right"><div class="s5-bar"><div class="s5-bar-fill" style="width:79%"></div></div><span class="s5-prob">79%</span></div>
+        </div>
+        <div class="s5-row" onclick="loadSong('generic')">
+          <span class="s5-num">19</span>
+          <div class="s5-art">🕊️</div>
+          <div class="s5-info"><div class="s5-name">年轮</div><div class="s5-meta">张碧晨/周深 · 2019</div></div>
+          <div class="s5-right"><div class="s5-bar"><div class="s5-bar-fill" style="width:74%"></div></div><span class="s5-prob">74%</span></div>
+        </div>
+      </div>
+      <div style="height:20px"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// Build crowd
+const crowd = document.getElementById('crowd');
+if (crowd) {
+  for (let i = 0; i < 90; i++) {
+    const p = document.createElement('div');
+    p.className = 'crowd-person';
+    const h = 10 + Math.random() * 26;
+    const w = 2 + Math.random() * 2;
+    p.style.cssText = `width:${w}px;height:${h}px;opacity:${0.08 + Math.random()*0.18};background:rgba(255,255,255,0.9);border-radius:2px 2px 0 0;flex-shrink:0`;
+    crowd.appendChild(p);
+  }
+}
+
+// Build stage beams
+const beams = document.getElementById('beams');
+if (beams) {
+  const configs = [
+    { left: '20%', rotate: -28, color: 'rgba(255,160,40,0.12)',  delay: 0,   w: 160 },
+    { left: '36%', rotate: -10, color: 'rgba(255,200,80,0.08)',  delay: 1.2, w: 150 },
+    { left: '50%', rotate: 0,   color: 'rgba(255,220,120,0.10)', delay: 0.5, w: 200 },
+    { left: '64%', rotate: 12,  color: 'rgba(255,140,30,0.10)',  delay: 1.8, w: 150 },
+    { left: '80%', rotate: 28,  color: 'rgba(200,100,20,0.10)',  delay: 0.9, w: 160 },
+    { left: '42%', rotate: -4,  color: 'rgba(255,180,60,0.06)',  delay: 2.4, w: 240 },
+  ];
+  configs.forEach(c => {
+    const b = document.createElement('div');
+    b.style.cssText = `
+      position:absolute;top:0;left:${c.left};
+      width:${c.w}px;height:440px;
+      background:linear-gradient(to bottom,${c.color} 0%,transparent 85%);
+      transform:rotate(${c.rotate}deg);transform-origin:top center;
+      opacity:0;animation:beam-fade ${3 + Math.random()}s ease-in-out ${c.delay}s infinite alternate;
+    `;
+    beams.appendChild(b);
+  });
+}
+
+// ── Show data ──────────────────────────────────────
+const SHOWS = {
+  zs: {
+    id:'zs', artist:'周深', tour:'DEEP SEA 世界巡回演唱会 2026',
+    date:'6月29日 周一 · 19:30', venue:'深圳湾体育中心',
+    days:'12', songs:'约 22 首', status:'备课中 43%',
+    color:'#1a4a6e', gradient:'linear-gradient(160deg,#000a14 0%,#001830 50%,#002444 100%)',
+    heroPhoto:"url('zs-concert.jpg') center 42% / 140% auto no-repeat",
+    isActive: true, progress: 43, dayNum: 3, totalDays: 7,
+    todayEmoji:'🐟', todayTitle:'大鱼', todayDesc:'为什么这首歌是全场最重要的时刻',
+    accuracy:'94%',
+    setlist:[
+      {idx:'01',name:'大鱼',prob:99,songId:'dayu'},
+      {idx:'02',name:'起风了',prob:97,songId:'qifengle'},
+      {idx:'03',name:'光亮',prob:92,songId:'guangliang'},
+      {idx:'04',name:'达拉崩吧',prob:88,songId:'dalabengba'},
+    ],
+    fullSetlist:[
+      {phase:'开场铺垫',songs:[
+        {n:'01',name:'光亮',meta:'周深·2019',emoji:'✨',prob:92,tag:''},
+        {n:'02',name:'Where the Light Is',meta:'周深·2022',emoji:'🌊',prob:88,tag:''},
+        {n:'03',name:'醒不来的梦',meta:'周深·2021',emoji:'🌙',prob:85,tag:''},
+        {n:'04',name:'蓝色的心',meta:'周深·2023',emoji:'💙',prob:80,tag:''},
+      ]},
+      {phase:'情感深处',songs:[
+        {n:'05',name:'起风了',meta:'买辣椒也用券·cover',emoji:'🍂',prob:97,tag:'必唱'},
+        {n:'06',name:'清空',meta:'周深·2020',emoji:'🌸',prob:82,tag:''},
+        {n:'07',name:'达拉崩吧',meta:'周深·2019',emoji:'🎭',prob:88,tag:''},
+        {n:'08',name:'用一生去忘记',meta:'周深·2021',emoji:'🌿',prob:75,tag:''},
+        {n:'09',name:'不得不爱',meta:'潘玮柏·cover',emoji:'🎼',prob:70,tag:''},
+        {n:'10',name:'洋葱',meta:'周深·2022',emoji:'💫',prob:72,tag:''},
+      ]},
+      {phase:'全场高潮',songs:[
+        {n:'14',name:'大鱼',meta:'周深·2016·电影主题曲',emoji:'🐟',prob:99,tag:'第85分钟'},
+        {n:'15',name:'燃烧',meta:'周深·2022',emoji:'🔥',prob:90,tag:''},
+        {n:'16',name:'你的答案',meta:'阿冗·cover',emoji:'⚡',prob:86,tag:''},
+      ]},
+      {phase:'返场落幕',songs:[
+        {n:'17',name:'别',meta:'周深·2024',emoji:'🌃',prob:82,tag:''},
+        {n:'18',name:'我记得',meta:'周深·2021',emoji:'🌟',prob:79,tag:''},
+        {n:'19',name:'年轮',meta:'张碧晨/周深·2019',emoji:'🕊️',prob:74,tag:''},
+      ]},
+    ],
+    s3: {
+      chartPath:'M0,100 C12,96 25,88 48,75 C62,65 78,58 100,60 C118,62 130,82 152,88 C168,92 180,84 200,68 C216,54 228,42 250,44 C268,46 280,58 300,56 C318,54 330,48 340,46',
+      chartFill:'M0,100 C12,96 25,88 48,75 C62,65 78,58 100,60 C118,62 130,82 152,88 C168,92 180,84 200,68 C216,54 228,42 250,44 C268,46 280,58 300,56 C318,54 330,48 340,46 L340,120 L0,120 Z',
+      peakCx:250, peakCy:44,
+      peak:{ time:'第 85 分钟', song:'《大鱼》', desc:'全场灯光熄灭，只剩一束追光。过去 7 场演出，这一刻平均有 92% 的观众自发亮起手机灯。' },
+      phases:['铺垫','深处','高潮 ✦','返场'],
+      timeline:[
+        { phase:'开场铺垫', songs:'《光亮》《Where the Light Is》《醒不来的梦》', desc:'轻盈的曲目，周深在慢慢打开自己，全场在慢慢进入状态。', time:'0 — 25 分钟', lit:false, songId:null },
+        { phase:'情感深处', songs:'《起风了》《清空》《达拉崩吧》', desc:'节奏变慢，灯光转蓝。关于遗忘与告别，全场安静一起哼唱。', time:'25 — 60 分钟', lit:false, songId:'qifengle' },
+        { phase:'全场高潮 ✦', songs:'《大鱼》《燃烧》', desc:'舞台特效全开，他的高音会让整个场馆震动。提前充好电，这段值得录。', time:'80 — 100 分钟', lit:true, songId:'dayu' },
+        { phase:'返场落幕', songs:'《别》《你的答案》', desc:'安可环节。灯光重新亮起，他会和全场互动道别。最后一首结束后不要急着走。', time:'110 — 130 分钟', lit:false, songId:null },
+      ],
+    },
+  },
+  gwr: {
+    id:'gwr', artist:'告五人', tour:'STORY 世界巡回演唱会 2026',
+    date:'8月15日 周五 · 20:00', venue:'上海梅赛德斯奔驰文化中心',
+    days:'54', songs:'约 20 首', status:'未开始',
+    color:'#d4622a', gradient:'linear-gradient(160deg,#1a0800 0%,#3d1500 50%,#5a2000 100%)',
+    heroPhoto:"url('gwr.jpg') center 30% / cover no-repeat",
+    isActive: false, progress: 0, dayNum: 0, totalDays: 7,
+    todayEmoji:'🌙', todayTitle:'披星戴月地想你', todayDesc:'告五人最具代表性的现场必唱曲',
+    accuracy:'91%',
+    setlist:[
+      {idx:'01',name:'披星戴月地想你',prob:99,songId:'pxdy'},
+      {idx:'02',name:'说说而已',prob:94,songId:'ssery'},
+      {idx:'03',name:'在树上唱歌',prob:89,songId:'generic'},
+      {idx:'04',name:'趁早',prob:85,songId:'generic'},
+    ],
+    fullSetlist:[
+      {phase:'开场',songs:[
+        {n:'01',name:'披星戴月地想你',meta:'告五人·2019',emoji:'🌙',prob:99,tag:'必唱'},
+        {n:'02',name:'灰色浪漫',meta:'告五人·2020',emoji:'🌫️',prob:88,tag:''},
+        {n:'03',name:'如果可以',meta:'告五人·2018',emoji:'🌿',prob:82,tag:''},
+      ]},
+      {phase:'情感爬升',songs:[
+        {n:'04',name:'说说而已',meta:'告五人·2021',emoji:'💬',prob:94,tag:''},
+        {n:'05',name:'我曾',meta:'告五人·2020',emoji:'🕯️',prob:90,tag:''},
+        {n:'06',name:'趁早',meta:'告五人·2022',emoji:'⏳',prob:85,tag:''},
+        {n:'07',name:'爱你',meta:'告五人·2023',emoji:'❤️',prob:83,tag:''},
+        {n:'08',name:'你走以后',meta:'告五人·2021',emoji:'🚶',prob:78,tag:''},
+      ]},
+      {phase:'全场高潮',songs:[
+        {n:'13',name:'在树上唱歌',meta:'告五人·2019',emoji:'🌳',prob:89,tag:'第75分钟'},
+        {n:'14',name:'总是要分离',meta:'告五人·2022',emoji:'🌊',prob:87,tag:''},
+        {n:'15',name:'明明',meta:'告五人·2023',emoji:'✨',prob:84,tag:''},
+      ]},
+      {phase:'返场',songs:[
+        {n:'17',name:'不要说话',meta:'陈奕迅·cover',emoji:'🤫',prob:80,tag:''},
+        {n:'18',name:'有没有一首歌',meta:'告五人·2024',emoji:'🎵',prob:76,tag:''},
+      ]},
+    ],
+    s3: {
+      chartPath:'M0,105 C10,100 22,92 45,80 C60,70 75,55 95,52 C112,50 122,62 145,70 C160,76 172,70 192,58 C210,46 225,36 248,38 C265,40 278,55 298,52 C316,50 328,44 340,40',
+      chartFill:'M0,105 C10,100 22,92 45,80 C60,70 75,55 95,52 C112,50 122,62 145,70 C160,76 172,70 192,58 C210,46 225,36 248,38 C265,40 278,55 298,52 C316,50 328,44 340,40 L340,120 L0,120 Z',
+      peakCx:248, peakCy:38,
+      peak:{ time:'第 75 分钟', song:'《在树上唱歌》', desc:'Asu 和鄭宇界隔着舞台对唱，手持自制道具。过去 5 场演出，这一刻观众自发跟唱率接近 100%。' },
+      phases:['开场','爬升','高潮 ✦','返场'],
+      timeline:[
+        { phase:'开场破冰', songs:'《披星戴月地想你》《灰色浪漫》', desc:'一开场就是全场最熟悉的旋律，气氛立刻点燃，比很多乐队都更直接。', time:'0 — 20 分钟', lit:false, songId:'pxdy' },
+        { phase:'情感爬升', songs:'《说说而已》《我曾》《趁早》', desc:'主唱声音开始沙哑，像在说一个真实的故事。这段最容易掉眼泪。', time:'20 — 55 分钟', lit:false, songId:'ssery' },
+        { phase:'全场高潮 ✦', songs:'《在树上唱歌》《总是要分离》', desc:'台上两个人背靠背唱，灯光变暗只剩轮廓。这是告五人演唱会最具仪式感的时刻。', time:'70 — 85 分钟', lit:true, songId:'generic' },
+        { phase:'返场落幕', songs:'《有没有一首歌》', desc:'返场只唱一首，但会唱很久。观众通常不愿离开，他们也不急着下台。', time:'100 — 115 分钟', lit:false, songId:null },
+      ],
+    },
+  },
+  cyx: {
+    id:'cyx', artist:'陈奕迅', tour:'FEAR AND DREAMS 2026',
+    date:'9月3日 周三 · 19:30', venue:'广州天河体育场',
+    days:'73', songs:'约 25 首', status:'未开始',
+    color:'#2d4a8a', gradient:'linear-gradient(160deg,#00051a 0%,#000e30 50%,#001244 100%)',
+    heroPhoto:"url('cyx.jpg') center 25% / cover no-repeat",
+    isActive: false, progress: 0, dayNum: 0, totalDays: 7,
+    todayEmoji:'🎵', todayTitle:'十年', todayDesc:'陈奕迅演唱会最震撼的压轴时刻',
+    accuracy:'89%',
+    setlist:[
+      {idx:'01',name:'你给我的爱',prob:98,songId:'nggdai'},
+      {idx:'02',name:'十年',prob:97,songId:'shinian'},
+      {idx:'03',name:'富士山下',prob:93,songId:'generic'},
+      {idx:'04',name:'好久不见',prob:90,songId:'generic'},
+    ],
+    fullSetlist:[
+      {phase:'开场',songs:[
+        {n:'01',name:'你给我的爱',meta:'陈奕迅·2001',emoji:'🎵',prob:98,tag:'必唱'},
+        {n:'02',name:'浮夸',meta:'陈奕迅·2005',emoji:'🎭',prob:92,tag:''},
+        {n:'03',name:'K歌之王',meta:'陈奕迅·2000',emoji:'👑',prob:88,tag:''},
+      ]},
+      {phase:'深情段落',songs:[
+        {n:'06',name:'好久不见',meta:'陈奕迅·2010',emoji:'🌅',prob:90,tag:''},
+        {n:'07',name:'富士山下',meta:'陈奕迅·2006',emoji:'🗻',prob:93,tag:''},
+        {n:'08',name:'葡萄成熟时',meta:'陈奕迅·2002',emoji:'🍇',prob:82,tag:''},
+        {n:'09',name:'红玫瑰',meta:'陈奕迅·2005',emoji:'🌹',prob:85,tag:''},
+        {n:'10',name:'爱情转移',meta:'陈奕迅·2007',emoji:'🔄',prob:88,tag:''},
+      ]},
+      {phase:'全场高潮',songs:[
+        {n:'15',name:'十年',meta:'陈奕迅·2003',emoji:'🕰️',prob:97,tag:'第90分钟'},
+        {n:'16',name:'单车',meta:'陈奕迅·2001',emoji:'🚲',prob:91,tag:''},
+        {n:'17',name:'最后一页',meta:'陈奕迅·2004',emoji:'📖',prob:86,tag:''},
+      ]},
+      {phase:'返场',songs:[
+        {n:'20',name:'圣诞结',meta:'陈奕迅·2011',emoji:'🎄',prob:84,tag:''},
+        {n:'21',name:'明年今日',meta:'陈奕迅·2003',emoji:'📅',prob:89,tag:''},
+      ]},
+    ],
+    s3: {
+      chartPath:'M0,108 C15,104 28,96 50,85 C65,76 80,72 100,74 C118,76 128,88 150,92 C165,95 178,88 198,76 C215,64 228,50 252,48 C270,46 282,60 302,58 C320,56 332,50 340,48',
+      chartFill:'M0,108 C15,104 28,96 50,85 C65,76 80,72 100,74 C118,76 128,88 150,92 C165,95 178,88 198,76 C215,64 228,50 252,48 C270,46 282,60 302,58 C320,56 332,50 340,48 L340,120 L0,120 Z',
+      peakCx:252, peakCy:48,
+      peak:{ time:'第 90 分钟', song:'《十年》', desc:'Eason 停止演唱，让全场 5 万人清唱。这是他演唱会的标志性仪式，几乎每场必有。你需要提前记住歌词。' },
+      phases:['开场','深情','高潮 ✦','返场'],
+      timeline:[
+        { phase:'热场开场', songs:'《你给我的爱》《浮夸》《K歌之王》', desc:'Eason 开场就全力输出，三首连唱不留余地。这段他会在台上跑跳，体力惊人。', time:'0 — 25 分钟', lit:false, songId:'nggdai' },
+        { phase:'深情段落', songs:'《好久不见》《富士山下》《爱情转移》', desc:'钢琴独奏开始，灯光变暗。这段他在讲故事，台下很多人在哭。', time:'30 — 65 分钟', lit:false, songId:'shinian' },
+        { phase:'全场高潮 ✦', songs:'《十年》《单车》', desc:'5万人齐唱《十年》。Eason 把麦克风转向观众，那一刻你会觉得自己是这首歌的一部分。', time:'85 — 100 分钟', lit:true, songId:'shinian' },
+        { phase:'返场落幕', songs:'《圣诞结》《明年今日》', desc:'安可两首，情感最深。《明年今日》结束后全场不愿离去，他通常会再唱一段。', time:'110 — 130 分钟', lit:false, songId:null },
+      ],
+    },
+  },
+};
+
+let currentShow = SHOWS.zs;
+let pendingShow = null;
+
+// ── Song covers (photo or gradient fallback) ───────
+const SONG_COVERS = {
+  dayu:       { base:'zs-dayu',       pos:'center 30%', fallback:'linear-gradient(160deg,#00101a 0%,#002a40 40%,#004060 70%,#000a10 100%)' },
+  qifengle:   { base:'zs-qifengle',   pos:'center 25%', fallback:'linear-gradient(160deg,#1a0a00 0%,#3d1800 40%,#6b2e0a 70%,#2a1005 100%)' },
+  guangliang: { base:'zs-guangliang', pos:'center 30%', fallback:'linear-gradient(160deg,#0a0a18 0%,#1a1a3d 40%,#2d2060 70%,#080818 100%)' },
+  dalabengba: { base:'zs-dalabengba', pos:'center 30%', fallback:'linear-gradient(160deg,#0d0a00 0%,#261e00 40%,#3d2e00 70%,#0a0800 100%)' },
+  generic:    { base:null,            pos:'center',     fallback:'linear-gradient(160deg,#080808 0%,#111 40%,#181818 100%)' },
+};
+
+// ── Song sequence (for next-song feature) ──────────
+const SONG_SEQUENCE = ['guangliang','qifengle','dalabengba','dayu','generic'];
+
+// ── Song data ──────────────────────────────────────
+const SONGS = {
+  dayu: {
+    emoji: '🐟', title: '大鱼', meta: '周深 · 2016 · 电影《大鱼海棠》主题曲',
+    chips: [{text:'全场最高潮',hi:true},{text:'第 85 分钟',hi:true},{text:'必读故事',hi:false}],
+    lbTime: '第 85 分钟', lbWidth: '97%',
+    lbTip: '建议<strong>演出前不要重复听太多次</strong>——把第一次完整感受留给现场。那一刻值得是全新的。',
+    stories: [
+      { label: '这首歌从哪里来', text: '2016年，周深接到邀请为国漫电影《大鱼海棠》演唱主题曲时，他才24岁，几乎没人认识他。导演说：<strong>「我们要一个听起来不像人类的声音。」</strong> 他录了三个版本，最终采用了凌晨三点那一条——因为那时候他真的哭了。' },
+      { label: '歌词里藏了什么', text: '整首歌在讲一件事：<em>为了爱，把自己献祭掉。</em>「化作灯火，只为照你归途」——这是电影里女主角的选择，也是周深自己对音乐的态度。他曾说：<strong>「唱这首歌的时候，我不是在表演，我是在消失。」</strong>' },
+      { label: '现场的感觉', text: '过去 7 场演出，每次唱到第二段副歌，全场会自发亮起手机灯。没有人组织。有人形容那个画面像<strong>「银河掉进了体育馆」</strong>。他唱完后沉默了大约 10 秒，才开口说话。你也可以是其中一盏灯。' }
+    ]
+  },
+  qifengle: {
+    emoji: '🍂', title: '起风了', meta: '买辣椒也用券 · 2018 · 周深翻唱版',
+    chips: [{text:'必唱曲目',hi:true},{text:'全场合唱',hi:true},{text:'情感深处',hi:false}],
+    lbTime: '第 45 分钟', lbWidth: '78%',
+    lbTip: '这首歌全场会一起唱。<strong>提前记住第一段歌词</strong>，那个时刻一起开口会让你觉得自己真的属于这个现场。',
+    stories: [
+      { label: '为什么是周深唱', text: '原曲出自2017年一个素人创作者，周深在一次直播中随手唱了几句，意外引爆全网。他的版本比原唱多了一种<strong>「漂泊感」</strong>——像是一个人在异乡听见了自己的故乡。' },
+      { label: '那句歌词', text: '「起风了，才知道，原来你也会扑来」——后半句很少有人注意。这首歌不只是关于告别，更是关于<em>你还没准备好就已经失去</em>的那种茫然。周深把这种茫然唱得比任何人都轻。' },
+      { label: '现场合唱', text: '过去的演出中，这首歌是观众合唱声量最大的一首。他唱到副歌时会把麦克风转向观众。<strong>如果你想要被这个场馆记住，就在这一刻开口。</strong>' }
+    ]
+  },
+  guangliang: {
+    emoji: '✨', title: '光亮', meta: '周深 · 2019 · 首张专辑',
+    chips: [{text:'开场曲',hi:false},{text:'第 8 分钟',hi:false},{text:'情绪铺垫',hi:false}],
+    lbTime: '第 8 分钟', lbWidth: '55%',
+    lbTip: '开场曲，<strong>用来预热全场情绪</strong>。这时候周深还在试探观众，观众也在进入状态。好好感受那种期待感。',
+    stories: [
+      { label: '这首歌的来历', text: '《光亮》是周深第一次完全掌控自己声音方向的作品。他在采访中说：<strong>「以前唱歌是给别人听的，这首是给自己的。」</strong> 你听到的那种透明感，是真实的。' },
+      { label: '开场的意义', text: '几乎每场演唱会，周深都用《光亮》开场。它像一把钥匙——<em>先打开你，再让后面的歌进来。</em>别急着进入状态，跟着这首歌一起走进去就好了。' }
+    ]
+  },
+  dalabengba: {
+    emoji: '🎭', title: '达拉崩吧', meta: '周深 · 2019 · 综艺首发',
+    chips: [{text:'全场互动',hi:true},{text:'节奏转换',hi:false},{text:'必听',hi:false}],
+    lbTime: '第 55 分钟', lbWidth: '65%',
+    lbTip: '<strong>这是全场最好玩的一首</strong>。周深会表演不同角色的声音，有时候还会临时加戏。手机拍视频，这段最适合分享。',
+    stories: [
+      { label: '这首歌是什么', text: '《达拉崩吧》是一首古老的民间绕口令改编的歌，讲一个猎人被各种动物循环报复的荒诞故事。周深用不同的声线分别演唱每个角色，<strong>一个人就是一台戏。</strong>' },
+      { label: '现场更好玩', text: '每场演出他都会临时加段子，有时候自己先笑场。这首歌会打破前面积累的情绪压力，让全场在笑声中喘口气。<em>享受它，别想太多。</em>' }
+    ]
+  },
+  // 告五人
+  pxdy: {
+    emoji:'🌙', title:'披星戴月地想你', meta:'告五人 · 2019 · 专辑《带我去找夜生活》',
+    chips:[{text:'开场必唱',hi:true},{text:'全场合唱',hi:true},{text:'必读故事',hi:false}],
+    lbTime:'第 5 分钟', lbWidth:'99%',
+    lbTip:'几乎所有场次的开场曲。<strong>第一句旋律响起时全场会立刻爆发</strong>，建议提前把歌词记熟，用这首歌找到现场的感觉。',
+    stories:[
+      { label:'这首歌从哪里来', text:'2019年，告五人在成立三年后发布这首歌。写这首歌时乐队刚刚失去一位至亲好友，Asu 说：<strong>「我们想把思念写成一首能让别人也跟着哭的歌。」</strong>没想到，这首歌让整个华语乐坛都哭了。' },
+      { label:'歌词在说什么', text:'歌名里的「披星戴月」不是浪漫，是<em>不管多晚、不管多累，都一直在想你</em>。「想你」这件事在这首歌里不是甜蜜的，是一种放不下的疼。' },
+      { label:'现场的样子', text:'开场的第一个音符响起，几乎全场都会跟着唱。没有人教，没有人组织。那种集体共鸣是告五人演唱会最特别的时刻——<strong>你会发现，每一个人都带着各自的故事来到这里。</strong>' },
+    ]
+  },
+  ssery: {
+    emoji:'💬', title:'说说而已', meta:'告五人 · 2021 · 专辑《带我去找夜生活》',
+    chips:[{text:'情感核心',hi:true},{text:'第 35 分钟',hi:false},{text:'必读故事',hi:false}],
+    lbTime:'第 35 分钟', lbWidth:'82%',
+    lbTip:'这首歌通常在演唱会情绪最深的阶段演唱。<strong>建议在现场闭上眼睛听</strong>，主唱的声线在现场比录音室版本更有力量。',
+    stories:[
+      { label:'这首歌的背景', text:'《说说而已》写的是那种「明明很痛，还要装作没事」的状态。告五人说这是乐队最私人的一首歌，<strong>写完之后他们很久没有拿出来给人听</strong>，因为太真实。' },
+      { label:'现场的特别之处', text:'这首歌的演出版本比录音室版多了约 40 秒的尾奏。那段时间里主唱会停止演唱，只剩下乐器和灯光。<em>那 40 秒，是现场最安静、也最震撼的时刻之一。</em>' },
+    ]
+  },
+  // 陈奕迅
+  shinian: {
+    emoji:'🕰️', title:'十年', meta:'陈奕迅 · 2003 · 专辑《黑白灰》',
+    chips:[{text:'全场齐唱',hi:true},{text:'第 90 分钟',hi:true},{text:'必背歌词',hi:false}],
+    lbTime:'第 90 分钟', lbWidth:'97%',
+    lbTip:'Eason 会在副歌把麦克风转向观众，让 5 万人清唱。<strong>你必须提前把歌词背熟</strong>——那一刻如果你没有开口，会后悔很久。',
+    stories:[
+      { label:'为什么二十年后还在唱', text:'《十年》2003年发行，至今仍是华语流行史上传唱度最高的歌之一。它不只是一首情歌——它是一代人用来<strong>丈量自己失去了什么、又得到了什么</strong>的刻度。' },
+      { label:'那句歌词', text:'「如果那两个字没有颤抖，我不会发现我难受」——很少有歌词能把「强撑着没事」写得这么精准。林夕花了一晚上写完，陈奕迅说第一次读到时背后发麻。' },
+      { label:'现场齐唱的仪式', text:'Eason 的演唱会有一个传统：唱到《十年》副歌时，他会突然停下来，把麦克风对向观众。5 万人清唱那一刻，<strong>没有伴奏，只有人声</strong>。去之前，把这首歌的每一个字都记住。' },
+    ]
+  },
+  nggdai: {
+    emoji:'🎵', title:'你给我的爱', meta:'陈奕迅 · 2001 · 专辑《反正是我》',
+    chips:[{text:'开场曲',hi:false},{text:'第 3 分钟',hi:false}],
+    lbTime:'第 3 分钟', lbWidth:'60%',
+    lbTip:'经典开场曲，<strong>进场后找好自己的位置，深呼吸</strong>。Eason 用这首歌热场，后面还有很多好歌在等你。',
+    stories:[
+      { label:'开场的意义', text:'Eason 喜欢用这首歌开场，因为它有一种「我来了，我们开始吧」的仪式感。<strong>它不是最有名的，但每次响起，气氛立刻到位。</strong>' },
+    ]
+  },
+  generic: {
+    emoji: '🎵', title: '待定', meta: 'AI 备课内容生成中',
+    chips: [{text:'预测歌单',hi:false}],
+    lbTime: '待定', lbWidth: '70%',
+    lbTip: 'AI 基于巡演数据分析预测，<strong>实际演出顺序可能有调整</strong>。提前了解这首歌的背景，现场感受会更深。',
+    stories: [
+      { label: '关于这首歌', text: '这首歌的详细故事正在分析生成中。<strong>AI 每天会更新一首重点曲目的深度解读</strong>，按备课计划推进，你会在合适的时间收到它。' }
+    ]
+  }
+};
+
+// ── Navigation state ──────────────────────────────
+let prevScreen = 2;
+let isPlaying = false;
+let currentSongId = 'dayu';
+const scrollPositions = {};
+
+function go(n, btn) {
+  const pc = document.querySelector('.pc');
+
+  // Save scroll position of current screen before leaving
+  const curActive = document.querySelector('.screen.active');
+  if (curActive) scrollPositions[curActive.id] = pc.scrollTop;
+
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('s' + n).classList.add('active');
+  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  else document.querySelectorAll('.nav button')[n - 1]?.classList.add('active');
+
+  // Restore scroll position or go to top
+  pc.scrollTop = (n === 4) ? 0 : (scrollPositions['s' + n] || 0);
+
+  // Show/hide navs
+  const navIds = ['s1-nav','s2-nav','s3-nav','s4-nav','s5-nav'];
+  navIds.forEach((id,i) => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = (i+1 === n) ? 'flex' : 'none';
+  });
+
+  updateTabBar(n);
+
+  // Animate ring when entering S2
+  if (n === 2) {
+    setTimeout(() => {
+      const arc = document.getElementById('ring-arc');
+      if (arc) arc.style.strokeDashoffset = '71.6'; // 125.7 * (1 - 0.43)
+    }, 80);
+  }
+}
+
+function updateTabBar(n) {
+  const tabs = document.querySelectorAll('.tab');
+  tabs.forEach(t => t.classList.remove('on'));
+  if (n === 1) tabs[0]?.classList.add('on');
+  else if (n === 5) tabs[1]?.classList.add('on');
+  else if (n === 3) tabs[2]?.classList.add('on');
+  else if (n === 2) tabs[3]?.classList.add('on');
+}
+
+function goBack() {
+  go(prevScreen, null);
+}
+
+function loadSong(id) {
+  const song = SONGS[id] || SONGS.generic;
+  prevScreen = getCurrentScreen();
+  currentSongId = id;
+
+  // Update cover (sync — preloaded at startup)
+  applyCoverToEl(document.querySelector('.s4-cover-photo'), id);
+
+  // Update cover title
+  document.querySelector('.ct-name').textContent = song.title;
+  document.querySelector('.ct-meta').textContent = song.meta;
+
+  // Update chips
+  const chipsEl = document.querySelector('.s4-cover-title .s4-chips');
+  chipsEl.innerHTML = song.chips.map(c =>
+    `<div class="s4-chip${c.hi?' hi':''}">${c.text}</div>`
+  ).join('');
+
+  // Update live bar
+  document.querySelector('.lb-time').textContent = song.lbTime;
+  document.querySelector('.lb-fill').style.width = song.lbWidth;
+  document.querySelector('.lb-tip').innerHTML = song.lbTip;
+
+  // Update stories
+  const storiesEl = document.querySelector('.stories');
+  storiesEl.innerHTML = song.stories.map(s =>
+    `<div class="story"><div class="story-label">${s.label}</div><div class="story-text">${s.text}</div></div>`
+  ).join('');
+
+  // Update mini player
+  document.querySelector('.mp-art').textContent = song.emoji;
+  document.querySelector('.mp-title').textContent = `${song.title} · 周深`;
+  isPlaying = false;
+  document.querySelector('.mp-btn').innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>`;
+
+  // Update next song card
+  const seq = SONG_SEQUENCE;
+  const idx = seq.indexOf(id);
+  const nextId = seq[(idx + 1) % seq.length];
+  const nextSong = SONGS[nextId] || SONGS.generic;
+  const nextCard = document.getElementById('s4-next-card');
+  document.getElementById('s4-next-art').textContent = nextSong.emoji;
+  document.getElementById('s4-next-title').textContent = nextSong.title;
+  document.getElementById('s4-next-meta').textContent = nextSong.meta.split('·')[0].trim() + ' · ' + (nextSong.chips[1]?.text || nextSong.chips[0]?.text || '');
+  nextCard.onclick = () => loadSong(nextId);
+
+  go(4, null);
+}
+
+// ── Cover preload: resolve all covers at startup ───
+const resolvedCovers = {};
+
+function preloadAllCovers(cb) {
+  const toLoad = Object.entries(SONG_COVERS).filter(([,c]) => c.base);
+  let pending = toLoad.length || 1;
+  function done() { if (--pending === 0) cb(); }
+  // Mark gradient-only entries immediately
+  Object.entries(SONG_COVERS).filter(([,c]) => !c.base).forEach(([id,c]) => {
+    resolvedCovers[id] = { gradient: c.fallback };
+  });
+  if (!toLoad.length) { cb(); return; }
+  toLoad.forEach(([id, c]) => {
+    const exts = ['jpg','jpeg','png'];
+    let i = 0;
+    function next() {
+      if (i >= exts.length) {
+        resolvedCovers[id] = { gradient: c.fallback };
+        done(); return;
+      }
+      const url = `${c.base}.${exts[i++]}`;
+      const img = new Image();
+      img.onload = () => { resolvedCovers[id] = { url, pos: c.pos }; done(); };
+      img.onerror = next;
+      img.src = url;
+    }
+    next();
+  });
+}
+
+function applyCoverToEl(el, id) {
+  const r = resolvedCovers[id];
+  const c = SONG_COVERS[id] || SONG_COVERS.generic;
+
+  if (r && r.url) {
+    el.style.backgroundImage = `url('${r.url}')`;
+    el.style.backgroundSize = 'cover';
+    el.style.backgroundPosition = r.pos || 'center 30%';
+    el.style.backgroundRepeat = 'no-repeat';
+  } else if (r && r.gradient) {
+    el.style.backgroundImage = r.gradient;
+    el.style.backgroundSize = '';
+    el.style.backgroundPosition = 'center';
+    el.style.backgroundRepeat = '';
+  } else {
+    // Not ready yet — show song-specific color immediately, then update on load
+    el.style.backgroundImage = c.fallback || SONG_COVERS.generic.fallback;
+    el.style.backgroundSize = '';
+    el.style.backgroundPosition = 'center';
+    el.style.backgroundRepeat = '';
+    if (c.base) {
+      const poll = setInterval(() => {
+        if (resolvedCovers[id]) { clearInterval(poll); applyCoverToEl(el, id); }
+      }, 80);
+    }
+  }
+}
+
+function getCurrentScreen() {
+  const active = document.querySelector('.screen.active');
+  return active ? parseInt(active.id.replace('s','')) : 2;
+}
+
+// ── Bottom sheet ──────────────────────────────────
+function openSheet(showId) {
+  const show = SHOWS[showId];
+  if (!show) return;
+  pendingShow = show;
+
+  document.getElementById('sheet-artist-name').textContent = show.artist;
+  document.getElementById('sheet-tour-name').textContent = show.tour;
+  document.getElementById('sheet-date-str').textContent = `${show.date} · ${show.venue}`;
+  document.getElementById('sheet-days').textContent = show.days;
+  document.getElementById('sheet-songs').textContent = show.songs;
+  document.getElementById('sheet-status').textContent = show.status;
+  document.getElementById('sheet-cta').textContent = show.ctaText;
+  document.getElementById('sheet-poster-grad').style.background = show.gradient;
+
+  const mask = document.getElementById('sheet-mask');
+  const sheet = document.getElementById('show-sheet');
+  mask.classList.add('open');
+  requestAnimationFrame(() => sheet.classList.add('open'));
+}
+
+function closeSheet() {
+  const mask = document.getElementById('sheet-mask');
+  const sheet = document.getElementById('show-sheet');
+  sheet.classList.remove('open');
+  setTimeout(() => mask.classList.remove('open'), 320);
+  pendingShow = null;
+}
+
+function confirmSwitchShow() {
+  if (!pendingShow) return;
+  switchShow(pendingShow.id);
+  closeSheet();
+}
+
+function switchShow(showId) {
+  const show = SHOWS[showId];
+  if (!show) return;
+  currentShow = show;
+
+  // ── S1 hero ──
+  document.querySelector('.hero-artist').textContent = show.artist;
+  document.querySelector('.hero-tour').textContent = show.tour;
+  document.querySelector('.hero-date').textContent = show.date;
+  document.querySelector('.hero-venue').textContent = show.venue;
+  document.querySelector('.hero-photo').style.background = show.heroPhoto;
+  document.querySelector('.hero-cd-num').textContent = show.days;
+
+  // ── S1 today card ──
+  document.querySelector('.today-cover').textContent = show.todayEmoji;
+  document.querySelector('.today-song-title').textContent = show.todayTitle;
+  document.querySelector('.today-song-desc').textContent = show.todayDesc;
+  document.querySelector('.tp-fill').style.width = show.progress + '%';
+  document.querySelector('.tp-label').textContent = `备课进度 ${show.progress}%`;
+
+  // ── S1 show cards: update badges ──
+  renderShowCards();
+
+  // ── S2 hero ──
+  document.querySelector('.s2-hero-photo').style.background = show.heroPhoto;
+  document.querySelector('.s2-name').textContent = show.artist;
+  document.querySelector('.s2-tour-line').textContent = `${show.tour} · ${show.venue} · ${show.date.split('·')[0].trim()}`;
+
+  // ── S2 progress ──
+  const pct = show.progress;
+  const dashoffset = 125.7 * (1 - pct/100);
+  document.querySelector('.s2-ring-num').textContent = pct + '%';
+  document.querySelector('#ring-arc').style.strokeDashoffset = '125.7'; // reset first
+  setTimeout(() => { document.querySelector('#ring-arc').style.strokeDashoffset = dashoffset; }, 80);
+  document.querySelector('.s2-strip-label').textContent = `备课进度 · 第 ${show.dayNum} 天`;
+  document.querySelector('.s2-strip-sub').textContent = `还剩 ${show.days} 天，${pct>0?'按计划完成即可':'建议今天开始'}`;
+  document.querySelector('.s2-chip.hi').textContent = `${show.days}天后`;
+
+  // ── S2 setlist ──
+  const slItems = document.querySelector('.sl-items');
+  slItems.innerHTML = show.setlist.map(s => `
+    <div class="sl-item" onclick="loadSong('${s.songId}')">
+      <span class="sl-idx">${s.idx}</span>
+      <span class="sl-name">${s.name}</span>
+      <div class="sl-prob-bar"><div class="sl-prob-fill" style="width:${s.prob}%"></div></div>
+      <span class="sl-pct">${s.prob}%</span>
+    </div>`).join('');
+  document.querySelector('.mod-pill.hi').textContent = `${show.accuracy} 准确率`;
+
+  // ── S2 today track ──
+  document.querySelector('.tt-art').textContent = show.todayEmoji;
+  document.querySelector('.tt-title').textContent = `今日 · 《${show.todayTitle}》`;
+  document.querySelector('.tt-sub').textContent = show.todayDesc;
+
+  // ── S3 ──
+  document.querySelector('.s3-hero-photo').style.background = show.heroPhoto;
+  document.querySelector('.s3-artist').textContent = show.artist;
+  document.querySelector('.s3-tour').textContent = `${show.tour} · ${show.songs} · 2h 30min`;
+  renderS3(show);
+
+  // ── S5 ──
+  renderS5(show);
+
+  // Mark as started
+  if (!show.isActive) {
+    show.isActive = true;
+    show.status = '备课中 0%';
+  }
+
+  go(2, null);
+}
+
+function renderS3(show) {
+  const s3 = show.s3;
+  if (!s3) return;
+
+  // Update chart SVG
+  const chartSvg = document.querySelector('#s3 .chart-area svg');
+  if (chartSvg) {
+    chartSvg.querySelector('path:nth-child(2)').setAttribute('d', s3.chartFill);
+    chartSvg.querySelector('path:nth-child(3)').setAttribute('d', s3.chartPath);
+    const dot = chartSvg.querySelector('circle');
+    dot.setAttribute('cx', s3.peakCx);
+    dot.setAttribute('cy', s3.peakCy);
+    const vline = chartSvg.querySelector('line:last-child');
+    if (vline) { vline.setAttribute('x1', s3.peakCx); vline.setAttribute('x2', s3.peakCx); }
+  }
+
+  // Update peak callout
+  document.querySelector('.pc-moment').textContent = `${s3.peak.time} · ${s3.peak.song}`;
+  document.querySelector('.pc-desc').textContent = s3.peak.desc;
+
+  // Update phases
+  const phaseEls = document.querySelectorAll('.em-phase');
+  s3.phases.forEach((p,i) => {
+    if (phaseEls[i]) {
+      phaseEls[i].textContent = p;
+      phaseEls[i].className = 'em-phase' + (p.includes('✦') ? ' peak' : '');
+    }
+  });
+
+  // Update timeline
+  const tl = document.querySelector('.timeline');
+  tl.innerHTML = `<div class="tl-label">阶段详解</div>` + s3.timeline.map((item, i) => `
+    <div class="tl-item" ${item.songId ? `onclick="loadSong('${item.songId}')"` : ''}>
+      <div class="tl-spine">
+        <div class="tl-dot${item.lit?' lit':''}"></div>
+        ${i < s3.timeline.length-1 ? '<div class="tl-line"></div>' : ''}
+      </div>
+      <div class="tl-body">
+        <div class="tl-phase">${item.phase}${item.songId ? ' <span style="font-size:11px;color:#555;font-weight:400">点击了解 →</span>' : ''}</div>
+        <div class="tl-songs">${item.songs}</div>
+        <div class="tl-desc">${item.desc}</div>
+        <div class="tl-time">${item.time}</div>
+      </div>
+    </div>`).join('');
+}
+
+function renderS5(show) {
+  const s5 = document.getElementById('s5');
+  if (!s5 || !show.fullSetlist) return;
+
+  // Update header
+  s5.querySelector('.s5-h1').textContent = '预测歌单';
+  s5.querySelector('.s5-sub').textContent = `${show.tour} · ${show.artist} · 共 ${show.fullSetlist.reduce((a,p)=>a+p.songs.length,0)} 首`;
+  s5.querySelector('.s5-accuracy').innerHTML = `✦ AI 准确率 ${show.accuracy} · 基于历史巡演数据`;
+
+  // Clear and re-render sections
+  const sections = s5.querySelectorAll('.s5-section');
+  sections.forEach(el => el.remove());
+
+  show.fullSetlist.forEach(phase => {
+    const sec = document.createElement('div');
+    sec.className = 's5-section';
+    const isHighlight = phase.phase.includes('高潮');
+    sec.innerHTML = `
+      <div class="s5-phase" ${isHighlight ? 'style="color:rgba(255,200,80,0.7)"' : ''}>${phase.phase}${isHighlight ? ' ✦' : ''}</div>
+      ${phase.songs.map(s => `
+        <div class="s5-row" onclick="loadSong('${s.emoji==='🐟'?'dayu':s.emoji==='🍂'?'qifengle':s.emoji==='✨'?'guangliang':s.emoji==='🎭'?'dalabengba':s.emoji==='🌙'?'pxdy':s.emoji==='💬'?'ssery':s.emoji==='🕰️'?'shinian':s.emoji==='🎵'&&s.name==='你给我的爱'?'nggdai':'generic'}')">
+          <span class="s5-num">${s.n}</span>
+          <div class="s5-art">${s.emoji}</div>
+          <div class="s5-info"><div class="s5-name">${s.name}</div><div class="s5-meta">${s.meta}</div></div>
+          <div class="s5-right">
+            ${s.tag ? `<span class="s5-tag">${s.tag}</span>` : `<div class="s5-bar"><div class="s5-bar-fill" style="width:${s.prob}%"></div></div><span class="s5-prob">${s.prob}%</span>`}
+          </div>
+        </div>`).join('')}`;
+    s5.querySelector('.s5-accuracy').after(sec);
+  });
+  // Add spacer
+  const spacer = document.createElement('div');
+  spacer.style.height = '20px';
+  s5.appendChild(spacer);
+}
+
+function openShowPicker() {
+  const list = document.getElementById('picker-list');
+  list.innerHTML = Object.values(SHOWS).map(show => `
+    <div class="picker-row" onclick="pickShow('${show.id}')">
+      <div class="picker-poster"><div class="picker-poster-grad" style="background:${show.gradient}"></div></div>
+      <div class="picker-info">
+        <div class="picker-artist">${show.artist}</div>
+        <div class="picker-date">${show.date.split('·')[0].trim()} · ${show.venue}</div>
+      </div>
+      <div class="picker-status ${show.id===currentShow.id?'active':''}">${show.id===currentShow.id?'备课中':show.isActive?show.status:'未开始'}</div>
+    </div>`).join('');
+  const mask = document.getElementById('picker-mask');
+  const sheet = document.getElementById('picker-sheet');
+  mask.classList.add('open');
+  requestAnimationFrame(() => sheet.classList.add('open'));
+}
+
+function closeShowPicker() {
+  const mask = document.getElementById('picker-mask');
+  const sheet = document.getElementById('picker-sheet');
+  sheet.classList.remove('open');
+  setTimeout(() => mask.classList.remove('open'), 320);
+}
+
+function pickShow(id) {
+  closeShowPicker();
+  if (id === currentShow.id) return;
+  const show = SHOWS[id];
+  if (!show.isActive) {
+    // Not started yet — show detail sheet first
+    setTimeout(() => openSheet(id), 340);
+  } else {
+    switchShow(id);
+  }
+}
+
+function getNextShow() {
+  const ids = Object.keys(SHOWS).filter(id => id !== currentShow.id);
+  return ids[0] || 'gwr';
+}
+
+function renderShowCards() {
+  // Update badge text on show cards based on current active show
+  const cards = document.querySelectorAll('.show-card[data-show]');
+  cards.forEach(card => {
+    const sid = card.dataset.show;
+    const badge = card.querySelector('.show-card-badge');
+    if (!badge) return;
+    if (sid === currentShow.id) {
+      badge.textContent = '当前备课中 ✓';
+      badge.style.color = 'rgba(255,200,80,0.9)';
+      badge.style.borderColor = 'rgba(255,180,50,0.3)';
+      badge.style.background = 'rgba(255,160,30,0.1)';
+    } else {
+      badge.textContent = '点击切换';
+      badge.style.color = '';
+      badge.style.borderColor = '';
+      badge.style.background = '';
+    }
+  });
+}
+
+// ── Play button toggle ────────────────────────────
+function togglePlay(btn) {
+  isPlaying = !isPlaying;
+  btn.innerHTML = isPlaying
+    ? `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`
+    : `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>`;
+  btn.style.background = isPlaying ? '#f0f0f0' : '#fff';
+}
+
+// ── Learned toggle (S5) ───────────────────────────
+const learnedSet = new Set(['guangliang','qifengle']);
+
+function toggleLearned(id) {
+  const row = document.getElementById('s5r-' + id);
+  const btn = row?.querySelector('.s5-learn-btn');
+  if (!btn) return;
+  if (learnedSet.has(id)) {
+    learnedSet.delete(id);
+    row.classList.remove('learned');
+    btn.textContent = '去学';
+    btn.classList.remove('done');
+  } else {
+    learnedSet.add(id);
+    row.classList.add('learned');
+    btn.textContent = '已学';
+    btn.classList.add('done');
+  }
+}
+
+// ── S3 chart peak dot clickable ───────────────────
+document.querySelector('#s3 .chart-area svg')?.addEventListener('click', function(e) {
+  const rect = this.getBoundingClientRect();
+  const x = (e.clientX - rect.left) / rect.width * 340;
+  const y = (e.clientY - rect.top) / rect.height * 120;
+  // Peak is at cx=250, cy=44 in viewBox — hit area ~40px radius
+  if (Math.abs(x - 250) < 40 && Math.abs(y - 44) < 40) {
+    loadSong('dayu');
+  }
+});
+
+// ── Swipe-back gesture ────────────────────────────
+(function() {
+  let startX = 0, startY = 0;
+  const pc = document.querySelector('.pc');
+  pc.addEventListener('touchstart', e => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+  pc.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = Math.abs(e.changedTouches[0].clientY - startY);
+    const curScreen = getCurrentScreen();
+    // Swipe right >60px, mostly horizontal, on screens with a back button
+    if (dx > 60 && dy < 60 && [3,4,5].includes(curScreen)) {
+      if (curScreen === 4) goBack();
+      else if (curScreen === 3) go(2, null);
+      else if (curScreen === 5) go(2, null);
+    }
+  }, { passive: true });
+})();
+
+// ── Init on load ──────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  const arc = document.getElementById('ring-arc');
+  if (arc) arc.style.strokeDashoffset = '125.7';
+
+  // Preload all covers, then apply default
+  preloadAllCovers(() => {
+    applyCoverToEl(document.querySelector('.s4-cover-photo'), 'dayu');
+  });
+
+  // Render S3 + S5 for default show
+  renderS3(SHOWS.zs);
+  renderS5(SHOWS.zs);
+});
+</script>
+</body>
+</html>
