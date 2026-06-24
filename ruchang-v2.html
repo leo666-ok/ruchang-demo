@@ -368,14 +368,15 @@ body {
 
 /* S2 mini hero banner */
 .s2-hero {
-  position: relative; height: 390px; overflow: hidden;
+  position: relative; height: 280px; overflow: hidden;
 }
 .s2-hero-photo {
-  position: absolute; inset: 0;
-  background: url('zs-concert.jpg') center 48% / cover no-repeat;
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background-image: url('zs-concert.jpg');
+  background-size: cover; background-position: center 35%; background-repeat: no-repeat;
 }
 .s2-hero-overlay {
-  position: absolute; inset: 0;
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
   background: linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.0) 35%, rgba(0,0,0,0.0) 55%, #000 100%);
 }
 .s2-top-bar {
@@ -514,11 +515,12 @@ body {
   position: relative; height: 280px; overflow: hidden;
 }
 .s3-hero-photo {
-  position: absolute; inset: 0;
-  background: url('zs-concert.jpg') center 45% / cover no-repeat;
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background-image: url('zs-concert.jpg');
+  background-size: cover; background-position: center 35%; background-repeat: no-repeat;
 }
 .s3-hero-overlay {
-  position: absolute; inset: 0;
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
   background: linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.0) 35%, rgba(0,0,0,0.0) 55%, #000 100%);
 }
 /* Amber stage glow at bottom */
@@ -728,12 +730,12 @@ body {
 .s5-title-text { font-size:14px; font-weight:600; }
 
 .s5-hero {
-  height: 220px; position: relative; overflow: hidden;
+  height: 280px; position: relative; overflow: hidden;
   background: #111;
 }
 .s5-hero-photo {
   position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-  background-size: cover; background-position: center 30%;
+  background-size: cover; background-position: center 35%;
   background-repeat: no-repeat;
 }
 .s5-hero-grad {
@@ -1627,7 +1629,7 @@ const SHOWS = {
     date:'6月29日 周一 · 19:30', venue:'深圳湾体育中心',
     days:'12', songs:'约 22 首', status:'备课中 43%',
     color:'#1a4a6e', gradient:'linear-gradient(160deg,#000a14 0%,#001830 50%,#002444 100%)',
-    photo:'zs-concert.jpg',
+    photo:'zs-concert.jpg', heroPos:'center 35%',
     heroPhoto:"url('zs-concert.jpg') center 42% / 140% auto no-repeat",
     isActive: true, progress: 43, dayNum: 3, totalDays: 7,
     todayEmoji:'🐟', todayTitle:'大鱼', todayDesc:'为什么这首歌是全场最重要的时刻',
@@ -1683,7 +1685,7 @@ const SHOWS = {
     date:'8月15日 周五 · 20:00', venue:'上海梅赛德斯奔驰文化中心',
     days:'54', songs:'约 20 首', status:'未开始',
     color:'#d4622a', gradient:'linear-gradient(160deg,#1a0800 0%,#3d1500 50%,#5a2000 100%)',
-    photo:'gwr.jpg',
+    photo:'gwr.jpg', heroPos:'center 25%',
     heroPhoto:"url('gwr.jpg') center 30% / cover no-repeat",
     isActive: false, progress: 0, dayNum: 0, totalDays: 7,
     todayEmoji:'🌙', todayTitle:'披星戴月地想你', todayDesc:'告五人最具代表性的现场必唱曲',
@@ -1736,7 +1738,7 @@ const SHOWS = {
     date:'9月3日 周三 · 19:30', venue:'广州天河体育场',
     days:'73', songs:'约 25 首', status:'未开始',
     color:'#2d4a8a', gradient:'linear-gradient(160deg,#00051a 0%,#000e30 50%,#001244 100%)',
-    photo:'cyx.jpg',
+    photo:'cyx.jpg', heroPos:'center 20%',
     heroPhoto:"url('cyx.jpg') center 25% / cover no-repeat",
     isActive: false, progress: 0, dayNum: 0, totalDays: 7,
     todayEmoji:'🎵', todayTitle:'十年', todayDesc:'陈奕迅演唱会最震撼的压轴时刻',
@@ -2134,7 +2136,9 @@ function switchShow(showId) {
   renderShowCards();
 
   // ── S2 hero ──
-  document.querySelector('.s2-hero-photo').style.background = show.heroPhoto;
+  const s2p = document.querySelector('.s2-hero-photo');
+  s2p.style.backgroundImage = `url('${show.photo}')`;
+  s2p.style.backgroundPosition = show.heroPos || 'center 35%';
   document.querySelector('.s2-name').textContent = show.artist;
   document.querySelector('.s2-tour-line').textContent = `${show.tour} · ${show.venue} · ${show.date.split('·')[0].trim()}`;
 
@@ -2165,7 +2169,9 @@ function switchShow(showId) {
   document.querySelector('.tt-sub').textContent = show.todayDesc;
 
   // ── S3 ──
-  document.querySelector('.s3-hero-photo').style.background = show.heroPhoto;
+  const s3p = document.querySelector('.s3-hero-photo');
+  s3p.style.backgroundImage = `url('${show.photo}')`;
+  s3p.style.backgroundPosition = show.heroPos || 'center 35%';
   document.querySelector('.s3-artist').textContent = show.artist;
   document.querySelector('.s3-tour').textContent = `${show.tour} · ${show.songs} · 2h 30min`;
   renderS3(show);
@@ -2236,7 +2242,9 @@ function renderS5(show) {
   const heroPhoto = document.getElementById('s5-hero-photo');
   if (show.photo) {
     heroPhoto.style.backgroundImage = `url('${show.photo}')`;
+    heroPhoto.style.backgroundPosition = show.heroPos || 'center 35%';
   } else {
+    heroPhoto.style.backgroundImage = 'none';
     heroPhoto.style.background = show.gradient;
   }
   document.getElementById('s5-hero-title').textContent = show.artist;
