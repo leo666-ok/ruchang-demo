@@ -723,16 +723,35 @@ body {
 ════════════════════════════ */
 #s5 { background: #000; padding-bottom: 84px; }
 
-.s5-top { display:flex; align-items:center; justify-content:space-between; padding:12px 24px; position:absolute; top:52px; left:0; right:0; background:#000; z-index:20; }
+.s5-top { display:flex; align-items:center; justify-content:space-between; padding:12px 24px; position:absolute; top:52px; left:0; right:0; background:linear-gradient(180deg,rgba(0,0,0,0.6) 0%,transparent 100%); z-index:20; }
 .s5-back { cursor:pointer; color:#fff; display:flex; align-items:center; }
 .s5-title-text { font-size:14px; font-weight:600; }
 
+.s5-hero {
+  height: 220px; position: relative; overflow: hidden;
+  background: #111;
+}
+.s5-hero-photo {
+  position: absolute; inset: 0;
+  background-size: cover; background-position: center 30%;
+  background-repeat: no-repeat;
+}
+.s5-hero-grad {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.0) 35%, rgba(0,0,0,0.0) 50%, #000 100%);
+}
+.s5-hero-label {
+  position: absolute; bottom: 16px; left: 24px; right: 24px;
+}
+.s5-hero-title { font-size:28px; font-weight:800; letter-spacing:-1px; line-height:1; }
+.s5-hero-sub { font-size:11px; color:rgba(255,255,255,0.45); margin-top:4px; letter-spacing:0.5px; }
+
 .s5-header {
-  padding: 108px 24px 20px;
+  padding: 16px 24px 20px;
   border-bottom: 1px solid #111;
 }
-.s5-h1 { font-size:22px; font-weight:800; letter-spacing:-0.5px; margin-bottom:4px; }
-.s5-sub { font-size:13px; color:#555; }
+.s5-h1 { font-size:22px; font-weight:800; letter-spacing:-0.5px; margin-bottom:4px; display:none; }
+.s5-sub { font-size:13px; color:#555; display:none; }
 .s5-accuracy { display:inline-flex; align-items:center; gap:6px; margin-top:12px; padding:6px 12px; background:rgba(255,180,50,0.1); border:1px solid rgba(255,180,50,0.2); border-radius:100px; font-size:11px; font-weight:700; color:rgba(255,210,80,0.9); }
 
 .s5-section { padding:0 24px; margin-top:20px; }
@@ -1405,6 +1424,14 @@ body {
 
     <!-- ══ S5 · FULL SETLIST ══ -->
     <div id="s5" class="screen">
+      <div class="s5-hero">
+        <div class="s5-hero-photo" id="s5-hero-photo"></div>
+        <div class="s5-hero-grad"></div>
+        <div class="s5-hero-label">
+          <div class="s5-hero-title" id="s5-hero-title">周深</div>
+          <div class="s5-hero-sub" id="s5-hero-sub">DEEP SEA 2026 · 预测 22 首</div>
+        </div>
+      </div>
       <div class="s5-header">
         <div class="s5-h1">预测歌单</div>
         <div class="s5-sub">DEEP SEA 2026 · 周深 · 共 22 首</div>
@@ -2205,9 +2232,20 @@ function renderS5(show) {
   const s5 = document.getElementById('s5');
   if (!s5 || !show.fullSetlist) return;
 
+  // Update hero
+  const heroPhoto = document.getElementById('s5-hero-photo');
+  if (show.photo) {
+    heroPhoto.style.backgroundImage = `url('${show.photo}')`;
+  } else {
+    heroPhoto.style.background = show.gradient;
+  }
+  document.getElementById('s5-hero-title').textContent = show.artist;
+  const totalSongs = show.fullSetlist.reduce((a,p)=>a+p.songs.length,0);
+  document.getElementById('s5-hero-sub').textContent = `${show.tour.split(' ')[0]} ${show.tour.split(' ').slice(-1)[0]} · 预测 ${totalSongs} 首`;
+
   // Update header
   s5.querySelector('.s5-h1').textContent = '预测歌单';
-  s5.querySelector('.s5-sub').textContent = `${show.tour} · ${show.artist} · 共 ${show.fullSetlist.reduce((a,p)=>a+p.songs.length,0)} 首`;
+  s5.querySelector('.s5-sub').textContent = `${show.tour} · ${show.artist} · 共 ${totalSongs} 首`;
   s5.querySelector('.s5-accuracy').innerHTML = `✦ AI 准确率 ${show.accuracy} · 基于历史巡演数据`;
 
   // Clear and re-render sections
