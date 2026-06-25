@@ -367,16 +367,16 @@ body {
   position: absolute; top: 0; left: 0; width: 52px; height: 52px;
   transform: rotate(-90deg); pointer-events: none;
 }
-.fp-ring-bg  { fill: none; stroke: rgba(255,255,255,0.12); stroke-width: 2.5; }
+.fp-ring-bg  { fill: none; stroke: rgba(255,255,255,0.1); stroke-width: 2; }
 .fp-ring-prog {
-  fill: none; stroke: #fff; stroke-width: 2.5; stroke-linecap: round;
-  stroke-dasharray: 131.9; /* 2π×21 */
-  stroke-dashoffset: 75.2; /* 43% progress: 131.9*(1-0.43) */
+  fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round;
+  stroke-dasharray: 168.5; /* 2*(46+46) - corners + 2π*9 */
+  stroke-dashoffset: 96; /* 43% progress: 168.5*(1-0.43) */
   transition: stroke-dashoffset 0.4s ease;
 }
 .fp-art {
   position: absolute; top: 4px; left: 4px;
-  width: 44px; height: 44px; border-radius: 50%;
+  width: 44px; height: 44px; border-radius: 8px;
   background: #1a1a1a; border: none;
   display: flex; align-items: center; justify-content: center;
   font-size: 22px; overflow: hidden;
@@ -1167,7 +1167,7 @@ body {
     <!-- Global floating mini player -->
     <div class="float-player" id="float-player" onclick="go(4,null)">
       <div class="fp-art-wrap">
-        <svg class="fp-ring" viewBox="0 0 52 52"><circle class="fp-ring-bg" cx="26" cy="26" r="21"/><circle class="fp-ring-prog" id="fp-ring-prog" cx="26" cy="26" r="21"/></svg>
+        <svg class="fp-ring" viewBox="0 0 52 52"><rect class="fp-ring-bg" x="3" y="3" width="46" height="46" rx="9"/><rect class="fp-ring-prog" id="fp-ring-prog" x="3" y="3" width="46" height="46" rx="9"/></svg>
         <div class="fp-art" id="fp-art">🐟<div class="eq"><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div></div></div>
       </div>
       <div class="fp-info">
@@ -2086,7 +2086,7 @@ function loadSong(id) {
   const _seq = currentShow.setlist.map(s => s.songId);
   const _idx = _seq.indexOf(id);
   const _prog = _idx >= 0 ? (_idx + 1) / _seq.length : 0.43;
-  const _circ = 131.9; // 2π×21
+  const _circ = 168.5; // rounded-rect perimeter
   const _ring = document.getElementById('fp-ring-prog');
   if (_ring) _ring.style.strokeDashoffset = (_circ * (1 - _prog)).toFixed(1);
   // Give all screens extra bottom space for the float player
