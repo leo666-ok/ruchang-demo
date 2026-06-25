@@ -1085,7 +1085,7 @@ body {
               <div class="today-song-title">大鱼</div>
               <div class="today-song-desc">为什么这首歌是全场最重要的时刻</div>
             </div>
-            <button class="today-play"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg></button>
+            <button class="today-play" onclick="event.stopPropagation();playTodaySong()"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg></button>
           </div>
           <div class="today-progress">
             <div class="tp-bar"><div class="tp-fill" style="width:43%"></div></div>
@@ -1290,7 +1290,7 @@ body {
             <div class="pr-day"><div class="pr-n">6</div><div class="pr-l">D6</div></div>
             <div class="pr-day"><div class="pr-n">7</div><div class="pr-l">D7</div></div>
           </div>
-          <div class="today-track" onclick="go(4,null)">
+          <div class="today-track" onclick="playTodaySong()">
             <div class="tt-art">🐟</div>
             <div>
               <div class="tt-title">今日 · 《大鱼》</div>
@@ -2431,6 +2431,18 @@ function togglePlay(btn) {
   if (fpBtn) { fpBtn.innerHTML = isPlaying ? pauseSvg : playSvg; fpBtn.style.background = isPlaying ? '#f0f0f0' : '#fff'; }
   document.getElementById('mp-art')?.classList.toggle('playing', isPlaying);
   document.getElementById('fp-art')?.classList.toggle('playing', isPlaying);
+}
+
+// ── Today card play ──────────────────────────────
+function playTodaySong() {
+  const dayIdx = (currentShow.dayNum || 1) - 1;
+  const todaySongId = (currentShow.setlist && currentShow.setlist[dayIdx]) ? currentShow.setlist[dayIdx].songId : 'dayu';
+  loadSong(todaySongId);
+  go(4, null);
+  // Auto-start playing state after navigation
+  requestAnimationFrame(() => {
+    if (!isPlaying) togglePlay(document.getElementById('fp-btn'));
+  });
 }
 
 // ── Learned toggle (S5) ───────────────────────────
