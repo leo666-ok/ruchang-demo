@@ -7,6 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>入场 v2</title>
 <style>
+:root { --sab: env(safe-area-inset-bottom, 0px); }
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
 
 body {
@@ -942,15 +943,19 @@ body {
   .s4-top {
     top: 0;
     padding: calc(env(safe-area-inset-top) + 10px) 24px 12px;
-    background: #000;
+    background: linear-gradient(180deg, rgba(0,0,0,0.75) 0%, transparent 100%);
   }
-  #s4 { padding-top: calc(env(safe-area-inset-top) + 60px); }
+  #s4 { padding-top: 0; }
   .s5-top {
     top: 0;
     padding: calc(env(safe-area-inset-top) + 10px) 24px 12px;
   }
   #s5 { padding-top: 0; }
   .tab-bar { padding-bottom: max(20px, env(safe-area-inset-bottom)); }
+  /* Float player must sit above the taller mobile tab bar */
+  .float-player {
+    bottom: calc(52px + max(28px, env(safe-area-inset-bottom)));
+  }
 }
 </style>
 </head>
@@ -2067,7 +2072,14 @@ function loadSong(id) {
   document.getElementById('fp-btn').innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>`;
   document.getElementById('float-player').classList.add('visible');
   // Give all screens extra bottom space for the float player
-  document.querySelectorAll('.screen').forEach(s => s.style.paddingBottom = '148px');
+  // Probe actual safe-area-inset-bottom (works on iOS Safari)
+  const _probe = document.createElement('div');
+  _probe.style.cssText = 'position:fixed;bottom:0;height:env(safe-area-inset-bottom,0px);pointer-events:none;visibility:hidden;';
+  document.body.appendChild(_probe);
+  const safeBottom = _probe.offsetHeight || 0;
+  document.body.removeChild(_probe);
+  const fpPad = Math.max(148, 132 + safeBottom);
+  document.querySelectorAll('.screen').forEach(s => s.style.paddingBottom = fpPad + 'px');
 
   // Update next song card — use current show's setlist so next song is always from the same show
   const seq = currentShow.setlist.map(s => s.songId);
