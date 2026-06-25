@@ -350,7 +350,7 @@ body {
   background: rgba(16,16,16,0.98);
   backdrop-filter: blur(30px);
   border-top: 1px solid #1e1e1e;
-  padding: 10px 16px 10px 12px;
+  padding: 10px 16px;
   display: flex; align-items: center; gap: 12px;
   z-index: 29;
   transform: translateY(130%);
@@ -738,13 +738,13 @@ body {
   display: flex; align-items: center; justify-content: center; font-size: 20px;
   position: relative; overflow: hidden; flex-shrink: 0;
 }
-.mp-art .eq {
+.mp-art .eq, .fp-art .eq {
   display: none;
-  position: absolute; inset: 0;
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0,0,0,0.55);
   align-items: flex-end; justify-content: center; gap: 3px;
-  padding-bottom: 10px;
-  border-radius: 10px;
+  padding-bottom: 8px;
+  border-radius: 8px;
 }
 .mp-art.playing .eq, .fp-art.playing .eq { display: flex; }
 .eq-bar {
@@ -2047,7 +2047,7 @@ function loadSong(id) {
 
   // Update mini player (S4 inline)
   const mpArt = document.getElementById('mp-art');
-  mpArt.childNodes[0].textContent = song.emoji;
+  applyArtCover(mpArt, id);
   mpArt.classList.remove('playing');
   const songLabel = `${song.title} · ${currentShow.artist}`;
   const dayLabel = currentShow.isActive && currentShow.dayNum > 0 ? `今日备课 · 第 ${currentShow.dayNum} 天` : `${currentShow.artist} · 备课中`;
@@ -2058,7 +2058,7 @@ function loadSong(id) {
 
   // Sync + show global float player
   const fpArt = document.getElementById('fp-art');
-  fpArt.childNodes[0].textContent = song.emoji;
+  applyArtCover(fpArt, id);
   fpArt.classList.remove('playing');
   document.getElementById('fp-title').textContent = songLabel;
   document.getElementById('fp-sub').textContent = dayLabel;
@@ -2109,6 +2109,36 @@ function preloadAllCovers(cb) {
     }
     next();
   });
+}
+
+// Apply cover to mini-player art elements (mp-art / fp-art)
+// Has photo → background image, hide emoji. No photo → gradient + emoji.
+function applyArtCover(artEl, id) {
+  const r = resolvedCovers[id];
+  const c = SONG_COVERS[id] || SONG_COVERS.generic;
+  const song = SONGS[id] || SONGS.generic;
+  const emojiNode = artEl.childNodes[0];
+
+  if (r && r.url) {
+    artEl.style.backgroundImage = `url('${r.url}')`;
+    artEl.style.backgroundSize = 'cover';
+    artEl.style.backgroundPosition = r.pos || 'center 30%';
+    artEl.style.backgroundRepeat = 'no-repeat';
+    if (emojiNode) emojiNode.textContent = '';
+  } else {
+    const grad = (r && r.gradient) || c.fallback || SONG_COVERS.generic.fallback;
+    artEl.style.backgroundImage = grad;
+    artEl.style.backgroundSize = '';
+    artEl.style.backgroundPosition = 'center';
+    artEl.style.backgroundRepeat = '';
+    if (emojiNode) emojiNode.textContent = song.emoji;
+    // Retry when preload finishes
+    if (!r && c.base) {
+      const poll = setInterval(() => {
+        if (resolvedCovers[id]) { clearInterval(poll); applyArtCover(artEl, id); }
+      }, 80);
+    }
+  }
 }
 
 function applyCoverToEl(el, id) {
@@ -2437,12 +2467,11 @@ function togglePlay(btn) {
 function playTodaySong() {
   const dayIdx = (currentShow.dayNum || 1) - 1;
   const todaySongId = (currentShow.setlist && currentShow.setlist[dayIdx]) ? currentShow.setlist[dayIdx].songId : 'dayu';
-  loadSong(todaySongId);
-  go(4, null);
-  // Auto-start playing state after navigation
-  requestAnimationFrame(() => {
+  loadSong(todaySongId); // loadSong already calls go(4) internally
+  // Auto-start playing state after navigation settles
+  setTimeout(() => {
     if (!isPlaying) togglePlay(document.getElementById('fp-btn'));
-  });
+  }, 50);
 }
 
 // ── Learned toggle (S5) ───────────────────────────
