@@ -343,6 +343,55 @@ body {
   width: 100%; text-align: center; padding: 6px;
 }
 
+/* ── Floating mini player (QQ Music style) ── */
+.float-player {
+  position: absolute; left: 0; right: 0;
+  bottom: 68px;
+  background: rgba(16,16,16,0.98);
+  backdrop-filter: blur(30px);
+  border-top: 1px solid #1e1e1e;
+  padding: 10px 16px 10px 12px;
+  display: flex; align-items: center; gap: 12px;
+  z-index: 29;
+  transform: translateY(130%);
+  transition: transform 0.36s cubic-bezier(0.25,0.46,0.45,0.94);
+  cursor: pointer;
+}
+.float-player.visible { transform: translateY(0); }
+/* thin progress bar at top of player */
+.float-player::before {
+  content: '';
+  position: absolute; top: 0; left: 0;
+  height: 2px; width: 43%;
+  background: linear-gradient(90deg, #fff 0%, rgba(255,255,255,0.4) 100%);
+  border-radius: 0 2px 2px 0;
+}
+.fp-art {
+  width: 44px; height: 44px; border-radius: 8px;
+  background: #1a1a1a; border: 1px solid #222;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0; position: relative; overflow: hidden;
+}
+.fp-info { flex: 1; min-width: 0; }
+.fp-title { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fp-sub   { font-size: 11px; color: #555; margin-top: 2px; }
+.fp-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.fp-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: #fff; border: none; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-family: inherit;
+  transition: opacity 0.15s;
+}
+.fp-btn:active { opacity: 0.7; }
+.fp-list-btn {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: transparent; border: none;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: #555;
+}
+.fp-list-btn:active { color: #fff; }
+
 /* ── Bottom tab bar — fixed inside phone shell ── */
 .tab-bar {
   position: absolute; bottom: 0; left: 0; right: 0;
@@ -697,7 +746,7 @@ body {
   padding-bottom: 10px;
   border-radius: 10px;
 }
-.mp-art.playing .eq { display: flex; }
+.mp-art.playing .eq, .fp-art.playing .eq { display: flex; }
 .eq-bar {
   width: 3px; border-radius: 2px;
   background: #fff;
@@ -1098,6 +1147,19 @@ body {
 
       </div>
 
+    </div>
+
+    <!-- Global floating mini player -->
+    <div class="float-player" id="float-player" onclick="go(4,null)">
+      <div class="fp-art" id="fp-art">🐟<div class="eq"><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div></div></div>
+      <div class="fp-info">
+        <div class="fp-title" id="fp-title">大鱼 · 周深</div>
+        <div class="fp-sub" id="fp-sub">今日备课 · 第 3 天</div>
+      </div>
+      <div class="fp-actions">
+        <button class="fp-btn" id="fp-btn" onclick="event.stopPropagation();togglePlay(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg></button>
+        <button class="fp-list-btn" onclick="event.stopPropagation();go(5,null)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3" cy="6" r="1.5" fill="currentColor" stroke="none"/><circle cx="3" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="3" cy="18" r="1.5" fill="currentColor" stroke="none"/></svg></button>
+      </div>
     </div>
 
     <!-- Tab bar — fixed to phone bottom, outside scroll container -->
@@ -1983,15 +2045,27 @@ function loadSong(id) {
     `<div class="story"><div class="story-label">${s.label}</div><div class="story-text">${s.text}</div></div>`
   ).join('');
 
-  // Update mini player
+  // Update mini player (S4 inline)
   const mpArt = document.getElementById('mp-art');
   mpArt.childNodes[0].textContent = song.emoji;
   mpArt.classList.remove('playing');
-  document.querySelector('.mp-title').textContent = `${song.title} · ${currentShow.artist}`;
+  const songLabel = `${song.title} · ${currentShow.artist}`;
   const dayLabel = currentShow.isActive && currentShow.dayNum > 0 ? `今日备课 · 第 ${currentShow.dayNum} 天` : `${currentShow.artist} · 备课中`;
+  document.querySelector('.mp-title').textContent = songLabel;
   document.querySelector('.mp-sub').textContent = dayLabel;
   isPlaying = false;
   document.querySelector('.mp-btn').innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>`;
+
+  // Sync + show global float player
+  const fpArt = document.getElementById('fp-art');
+  fpArt.childNodes[0].textContent = song.emoji;
+  fpArt.classList.remove('playing');
+  document.getElementById('fp-title').textContent = songLabel;
+  document.getElementById('fp-sub').textContent = dayLabel;
+  document.getElementById('fp-btn').innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>`;
+  document.getElementById('float-player').classList.add('visible');
+  // Give all screens extra bottom space for the float player
+  document.querySelectorAll('.screen').forEach(s => s.style.paddingBottom = '148px');
 
   // Update next song card — use current show's setlist so next song is always from the same show
   const seq = currentShow.setlist.map(s => s.songId);
@@ -2348,11 +2422,15 @@ function renderShowCards() {
 // ── Play button toggle ────────────────────────────
 function togglePlay(btn) {
   isPlaying = !isPlaying;
-  btn.innerHTML = isPlaying
-    ? `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`
-    : `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>`;
-  btn.style.background = isPlaying ? '#f0f0f0' : '#fff';
-  document.getElementById('mp-art').classList.toggle('playing', isPlaying);
+  const pauseSvg = `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`;
+  const playSvg  = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>`;
+  // sync both inline + float player buttons
+  const mpBtn = document.querySelector('.mp-btn');
+  const fpBtn = document.getElementById('fp-btn');
+  if (mpBtn) { mpBtn.innerHTML = isPlaying ? pauseSvg : playSvg; mpBtn.style.background = isPlaying ? '#f0f0f0' : '#fff'; }
+  if (fpBtn) { fpBtn.innerHTML = isPlaying ? pauseSvg : playSvg; fpBtn.style.background = isPlaying ? '#f0f0f0' : '#fff'; }
+  document.getElementById('mp-art')?.classList.toggle('playing', isPlaying);
+  document.getElementById('fp-art')?.classList.toggle('playing', isPlaying);
 }
 
 // ── Learned toggle (S5) ───────────────────────────
